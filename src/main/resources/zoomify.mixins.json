@@ -1,0 +1,21 @@
+{
+  "required": true,
+  "package": "id.patchedpixel.zoomify.mixins",
+  "compatibilityLevel": "JAVA_25",
+  "mixins": [
+    "spyglass.SpyglassItemMixin"
+  ],
+  "injectors": {
+    "defaultRequire": 1
+  },
+  "overwrites": {
+    "requireAnnotations": true
+  },
+  "client": [
+    "spyglass.AbstractClientPlayerEntityMixin",
+    "spyglass.HudMixin",
+    "zoom.CameraMixin",
+    "zoom.MouseMixin",
+    "zoom.secondary.HudMixin"
+  ]
+}
