@@ -16,14 +16,14 @@ config="${mod_id}.mixins.json"
 [[dependencies.${mod_id}]]
     modId="neoforge"
     type="required"
-    versionRange="[26.2.0,)"
+    versionRange="[26.1,)"
     ordering="NONE"
     side="CLIENT"
 
 [[dependencies.${mod_id}]]
     modId="minecraft"
     type="required"
-    versionRange="${minecraft_version_range}"
+    versionRange="[26.1,)"
     ordering="NONE"
     side="BOTH"
 

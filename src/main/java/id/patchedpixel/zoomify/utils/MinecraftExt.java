@@ -21,7 +21,7 @@ public final class MinecraftExt {
                 : SystemToast.SystemToastId.PERIODIC_NOTIFICATION;
 
         SystemToast.add(
-                minecraft.gui.toastManager(),
+                minecraft.getToastManager(),
                 toastId,
                 title,
                 description
@@ -33,10 +33,10 @@ public final class MinecraftExt {
     }
 
     public static void setScreen(Minecraft minecraft, Screen screen) {
-        minecraft.gui.setScreen(screen);
+        minecraft.setScreen(screen);
     }
 
     public static Screen getScreen(Minecraft minecraft) {
-        return minecraft.gui.screen();
+        return minecraft.screen;
     }
 }

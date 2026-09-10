@@ -82,8 +82,8 @@ configurations {
 }
 
 dependencies {
-    compileOnly "maven.modrinth:1eAoo2KR:bUVJOAmR"
-    compileOnly "maven.modrinth:DOUdJVEm:9ePC9FQ4"
+    compileOnly "maven.modrinth:1eAoo2KR:StuyKSnK"
+    compileOnly "maven.modrinth:DOUdJVEm:oEMsb0wo"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {

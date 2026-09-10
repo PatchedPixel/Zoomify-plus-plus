@@ -13,9 +13,9 @@
   },
   "client": [
     "spyglass.AbstractClientPlayerEntityMixin",
-    "spyglass.HudMixin",
+    "spyglass.GuiMixin",
     "zoom.CameraMixin",
     "zoom.MouseMixin",
-    "zoom.secondary.HudMixin"
+    "zoom.secondary.GuiMixin"
   ]
 }
