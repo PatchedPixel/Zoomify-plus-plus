@@ -2,7 +2,7 @@ package id.patchedpixel.zoomify.utils;
 
 import net.minecraft.network.chat.Component;
 
-public interface NameableEnum extends id.patchedpixel.zoomify.config.lib.api.NameableEnum {
+public interface NameableEnum extends dev.isxander.yacl3.api.NameableEnum {
     Component getLocalisedName();
 
     @Override

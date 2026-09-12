@@ -1,19 +1,19 @@
 package id.patchedpixel.zoomify.config;
 
-import id.patchedpixel.zoomify.config.lib.api.ButtonOption;
-import id.patchedpixel.zoomify.config.lib.api.ConfigCategory;
-import id.patchedpixel.zoomify.config.lib.api.LabelOption;
-import id.patchedpixel.zoomify.config.lib.api.Option;
-import id.patchedpixel.zoomify.config.lib.api.OptionDescription;
-import id.patchedpixel.zoomify.config.lib.api.OptionFlag;
-import id.patchedpixel.zoomify.config.lib.api.OptionGroup;
-import id.patchedpixel.zoomify.config.lib.api.YetAnotherConfigLib;
-import id.patchedpixel.zoomify.config.lib.api.controller.DoubleSliderControllerBuilder;
-import id.patchedpixel.zoomify.config.lib.api.controller.EnumControllerBuilder;
-import id.patchedpixel.zoomify.config.lib.api.controller.IntegerSliderControllerBuilder;
-import id.patchedpixel.zoomify.config.lib.api.controller.TickBoxControllerBuilder;
-import id.patchedpixel.zoomify.config.lib.api.utils.OptionUtils;
-import id.patchedpixel.zoomify.config.lib.config.v3.ConfigEntry;
+import dev.isxander.yacl3.api.ButtonOption;
+import dev.isxander.yacl3.api.ConfigCategory;
+import dev.isxander.yacl3.api.LabelOption;
+import dev.isxander.yacl3.api.Option;
+import dev.isxander.yacl3.api.OptionDescription;
+import dev.isxander.yacl3.api.OptionFlag;
+import dev.isxander.yacl3.api.OptionGroup;
+import dev.isxander.yacl3.api.YetAnotherConfigLib;
+import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
+import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
+import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
+import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
+import dev.isxander.yacl3.api.utils.OptionUtils;
+import dev.isxander.yacl3.config.v3.ConfigEntry;
 
 import id.patchedpixel.zoomify.config.demo.ControlEmulation;
 import id.patchedpixel.zoomify.config.demo.FirstPersonDemo;

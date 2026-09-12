@@ -3,8 +3,6 @@ package id.patchedpixel.zoomify;
 import com.mojang.blaze3d.platform.InputConstants;
 import id.patchedpixel.zoomify.config.SpyglassBehaviour;
 import id.patchedpixel.zoomify.config.ZoomifySettings;
-import id.patchedpixel.zoomify.config.lib.gui.image.YACLImageReloadListener;
-import id.patchedpixel.zoomify.config.lib.platform.YACLConfig;
 import id.patchedpixel.zoomify.zoom.DefaultZoomHelpers;
 import id.patchedpixel.zoomify.zoom.ZoomHelper;
 import net.minecraft.client.KeyMapping;
@@ -12,27 +10,21 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.commands.Commands;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraftforge.api.distmarker.Dist;
-import net.minecraftforge.api.distmarker.OnlyIn;
-import net.minecraftforge.client.event.RegisterClientCommandsEvent;
-import net.minecraftforge.client.event.RegisterClientReloadListenersEvent;
-import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
-import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.event.TickEvent;
-import net.minecraftforge.eventbus.api.IEventBus;
-import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.neoforged.api.distmarker.Dist;
+import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.common.Mod;
+import net.neoforged.neoforge.client.event.*;
+import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static id.patchedpixel.zoomify.utils.MinecraftExt.setScreen;
 import static id.patchedpixel.zoomify.utils.MinecraftExt.getScreen;
-import static id.patchedpixel.zoomify.utils.MinecraftExt.zoomifyRl;
 
-@OnlyIn(Dist.CLIENT)
-@Mod(Zoomify.MOD_ID)
+@Mod(value = Zoomify.MOD_ID, dist = Dist.CLIENT)
 public class Zoomify {
     public static final String MOD_ID = "zoomify";
     public static Zoomify INSTANCE;
@@ -81,23 +73,67 @@ public class Zoomify {
 
     private boolean displayGui = false;
 
-    public Zoomify() {
+    public Zoomify(IEventBus bus) {
         INSTANCE = this;
 
-        YACLConfig.HANDLER.load();
-        FMLJavaModLoadingContext.get()
-                .getModEventBus()
-                .<RegisterClientReloadListenersEvent>addListener(event -> {
-                    event.registerReloadListener(new YACLImageReloadListener());
-                });
+        bus.addListener(this::registerKeyMappings);
 
-        FMLJavaModLoadingContext.get()
-                .getModEventBus()
-                .addListener(this::registerKeyMappings);
-
-        MinecraftForge.EVENT_BUS.addListener(this::registerClientCommands);
-        MinecraftForge.EVENT_BUS.addListener(this::onClientTick);
+        NeoForge.EVENT_BUS.addListener(this::registerClientCommands);
+        NeoForge.EVENT_BUS.addListener(this::onClientTick);
+        NeoForge.EVENT_BUS.addListener(this::onMouseScroll);
+        NeoForge.EVENT_BUS.addListener(this::onCalculatePlayerTurn);
+        NeoForge.EVENT_BUS.addListener(this::onComputeFov);
+        NeoForge.EVENT_BUS.addListener(this::onRenderGuiPre);
     }
+
+    private void onRenderGuiPre(RenderGuiEvent.Pre event) {
+        if (secondaryZooming && ZoomifySettings.Companion.getSecondaryHideHUDOnZoom().get()) {
+            event.setCanceled(true);
+        }
+    }
+
+    private void onMouseScroll(InputEvent.MouseScrollingEvent event) {
+        double scrollY = event.getScrollDeltaY();
+
+        if (ZoomifySettings.Companion.getScrollZoom().get()
+                && zooming && scrollY != 0
+                && !ZoomifySettings.Companion.getKeybindScrolling()) {
+            mouseZoom(scrollY);
+            event.setCanceled(true);
+        }
+    }
+
+    private void onComputeFov(ViewportEvent.ComputeFov event) {
+        float partialTicks = (float) event.getPartialTick();
+
+        if (event.usedConfiguredFov()) {
+            event.setFOV(event.getFOV() / getZoomDivisor(partialTicks));
+        } else if (ZoomifySettings.Companion.getAffectHandFov().get()) {
+            event.setFOV(event.getFOV() / getZoomDivisor(partialTicks));
+        }
+    }
+
+    private void onCalculatePlayerTurn(CalculatePlayerTurnEvent event) {
+        Minecraft minecraft = Minecraft.getInstance();
+        boolean spyglassCombine = ZoomifySettings.Companion.getSpyglassBehaviour().get() == SpyglassBehaviour.COMBINE;
+        boolean isScoping = minecraft.player != null && minecraft.player.isScoping();
+
+        if (secondaryZooming
+                || (zooming && ZoomifySettings.Companion.getCinematicCamera().get() > 0)) {
+            event.setCinematicCameraEnabled(true);
+        }
+
+        if (!spyglassCombine || !isScoping) {
+            double divisor = Mth.lerp(
+                    ZoomifySettings.Companion.getRelativeSensitivity().get() / 100.0,
+                    1.0,
+                    previousZoomDivisor
+            );
+            event.setMouseSensitivity(event.getMouseSensitivity() / divisor);
+        }
+    }
+
+    private Zoomify() {}
 
     public boolean getZooming() {
         return zooming;
@@ -135,10 +171,8 @@ public class Zoomify {
         );
     }
 
-    public void onClientTick(TickEvent.ClientTickEvent event) {
-        if (event.phase == TickEvent.Phase.END) {
-            tick(Minecraft.getInstance());
-        }
+    public void onClientTick(ClientTickEvent.Post event) {
+        tick(Minecraft.getInstance());
     }
 
     private void tick(Minecraft minecraft) {

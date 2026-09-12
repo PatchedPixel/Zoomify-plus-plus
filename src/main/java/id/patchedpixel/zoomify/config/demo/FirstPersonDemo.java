@@ -1,6 +1,6 @@
 package id.patchedpixel.zoomify.config.demo;
 
-import id.patchedpixel.zoomify.config.lib.gui.image.impl.AnimatedDynamicTextureImage;
+import dev.isxander.yacl3.gui.image.impl.AnimatedDynamicTextureImage;
 import id.patchedpixel.zoomify.zoom.ZoomHelper;
 import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.resources.ResourceLocation;

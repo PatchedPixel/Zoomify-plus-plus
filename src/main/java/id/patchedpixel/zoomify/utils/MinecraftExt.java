@@ -16,9 +16,9 @@ public final class MinecraftExt {
     public static void toast(Component title, Component description, boolean longer) {
         Minecraft minecraft = Minecraft.getInstance();
 
-        SystemToast.SystemToastIds toastId = longer
-                ? SystemToast.SystemToastIds.UNSECURE_SERVER_WARNING
-                : SystemToast.SystemToastIds.PERIODIC_NOTIFICATION;
+        SystemToast.SystemToastId toastId = longer
+                ? SystemToast.SystemToastId.UNSECURE_SERVER_WARNING
+                : SystemToast.SystemToastId.PERIODIC_NOTIFICATION;
 
         SystemToast.add(
                 minecraft.getToasts(),

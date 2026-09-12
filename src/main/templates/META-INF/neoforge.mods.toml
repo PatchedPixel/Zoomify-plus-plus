@@ -1,35 +1,37 @@
 modLoader="javafml"
-loaderVersion="${loader_version_range}"
+loaderVersion="[1,)"
 license="${mod_license}"
 
 [[mods]]
 modId="${mod_id}"
 version="${mod_version}"
 displayName="${mod_name}"
-authors="${mod_authors}"
-logoFile="assets/icon.png"
-description='''${mod_description}'''
+iconFile="assets/zoomify/icon.png"
+authors="isxander"
+description='''
+A zoom mod with infinite customizability.
+'''
 
 [[mixins]]
-config="zoomify.mixins.json"
+config="${mod_id}.mixins.json"
 
 [[dependencies.${mod_id}]]
-    modId="forge"
-    mandatory=true
-    versionRange="${forge_version_range}"
+    modId="neoforge"
+    type="required"
+    versionRange="[21.1,)"
     ordering="NONE"
     side="CLIENT"
 
 [[dependencies.${mod_id}]]
     modId="minecraft"
-    mandatory=true
+    type="required"
     versionRange="${minecraft_version_range}"
     ordering="NONE"
     side="BOTH"
 
 [[dependencies.${mod_id}]]
-    modId="kotlinforforge"
-    mandatory = true
-    versionRange="[4.11,)"
+    modId="yet_another_config_lib_v3"
+    type="required"
+    versionRange="[0,)"
     ordering="AFTER"
     side="CLIENT"

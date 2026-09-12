@@ -14,7 +14,7 @@ public class GuiMixin {
     @Shadow @Final private Minecraft minecraft;
 
     @ModifyExpressionValue(
-            method = "render(Lnet/minecraft/client/gui/GuiGraphics;F)V",
+            method = "renderCameraOverlays",
             at = @At(
                     value = "INVOKE",
                     target = "Lnet/minecraft/client/player/LocalPlayer;isScoping()Z"

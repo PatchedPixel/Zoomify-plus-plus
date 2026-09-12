@@ -1,10 +1,10 @@
 package id.patchedpixel.zoomify.config;
 
 import com.mojang.serialization.Codec;
-import id.patchedpixel.zoomify.config.lib.config.v3.ConfigEntry;
-import id.patchedpixel.zoomify.config.lib.config.v3.JsonFileCodecConfig;
+import dev.isxander.yacl3.config.v3.ConfigEntry;
+import dev.isxander.yacl3.config.v3.JsonFileCodecConfig;
 import id.patchedpixel.zoomify.utils.TransitionType;
-import net.minecraftforge.fml.loading.FMLPaths;
+import net.neoforged.fml.loading.FMLPaths;
 
 public class ZoomifySettings extends JsonFileCodecConfig<ZoomifySettings> {
 
