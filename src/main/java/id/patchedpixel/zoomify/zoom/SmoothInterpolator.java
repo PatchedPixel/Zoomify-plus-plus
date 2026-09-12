@@ -1,0 +1,35 @@
+package id.patchedpixel.zoomify.zoom;
+
+import java.util.function.DoubleSupplier;
+
+public class SmoothInterpolator extends LinearInterpolator {
+    private final DoubleSupplier smoothness;
+
+    public SmoothInterpolator(DoubleSupplier smoothness) {
+        this.smoothness = smoothness;
+    }
+
+    @Override
+    public double getTimeIncrement(
+            boolean zoomingOut,
+            double tickDelta,
+            double targetInterpolation,
+            double currentInterpolation
+    ) {
+        double diff = !zoomingOut ? targetInterpolation - currentInterpolation : currentInterpolation - targetInterpolation;
+        return diff * smoothness.getAsDouble() / 0.05 * tickDelta;
+    }
+
+    @Override
+    public double tickInterpolation(double targetInterpolation, double currentInterpolation, double tickDelta) {
+        if (!isSmooth())
+            return targetInterpolation;
+
+        return super.tickInterpolation(targetInterpolation, currentInterpolation, tickDelta);
+    }
+
+    @Override
+    public boolean isSmooth() {
+        return smoothness.getAsDouble() != 1.0;
+    }
+}
