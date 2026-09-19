@@ -1,19 +1,12 @@
 package id.patchedpixel.zoomify.config;
 
-import dev.isxander.yacl3.api.ButtonOption;
-import dev.isxander.yacl3.api.ConfigCategory;
-import dev.isxander.yacl3.api.LabelOption;
-import dev.isxander.yacl3.api.Option;
-import dev.isxander.yacl3.api.OptionDescription;
-import dev.isxander.yacl3.api.OptionFlag;
-import dev.isxander.yacl3.api.OptionGroup;
-import dev.isxander.yacl3.api.YetAnotherConfigLib;
-import dev.isxander.yacl3.api.controller.DoubleSliderControllerBuilder;
-import dev.isxander.yacl3.api.controller.EnumControllerBuilder;
-import dev.isxander.yacl3.api.controller.IntegerSliderControllerBuilder;
-import dev.isxander.yacl3.api.controller.TickBoxControllerBuilder;
-import dev.isxander.yacl3.api.utils.OptionUtils;
-import dev.isxander.yacl3.config.v3.ConfigEntry;
+import id.patchedpixel.zoomify.config.lib.api.*;
+import id.patchedpixel.zoomify.config.lib.api.controller.DoubleSliderControllerBuilder;
+import id.patchedpixel.zoomify.config.lib.api.controller.EnumControllerBuilder;
+import id.patchedpixel.zoomify.config.lib.api.controller.IntegerSliderControllerBuilder;
+import id.patchedpixel.zoomify.config.lib.api.controller.TickBoxControllerBuilder;
+import id.patchedpixel.zoomify.config.lib.api.utils.OptionUtils;
+import id.patchedpixel.zoomify.config.lib.config.ConfigEntry;
 
 import id.patchedpixel.zoomify.config.demo.ControlEmulation;
 import id.patchedpixel.zoomify.config.demo.FirstPersonDemo;
@@ -23,7 +16,6 @@ import id.patchedpixel.zoomify.utils.TransitionType;
 import id.patchedpixel.zoomify.zoom.DefaultZoomHelpers;
 import id.patchedpixel.zoomify.zoom.ZoomHelper;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -36,7 +28,6 @@ import java.util.function.Consumer;
 import static id.patchedpixel.zoomify.utils.MinecraftExt.toast;
 
 public final class SettingsGuiFactory {
-
     private SettingsGuiFactory() {
     }
 
@@ -152,8 +143,8 @@ public final class SettingsGuiFactory {
 
         Screen createSettingsGui(Screen parent) {
 
-            YetAnotherConfigLib.Builder rootBuilder =
-                    YetAnotherConfigLib.createBuilder()
+            ConfigLib.Builder rootBuilder =
+                    ConfigLib.createBuilder()
                             .title(
                                     Component.translatable(
                                             "yacl3.config.zoomify.title"
@@ -868,7 +859,6 @@ public final class SettingsGuiFactory {
                                     ZoomifySettings.Companion.saveToFile();
 
                                     screen.init(
-                                            Minecraft.getInstance(),
                                             screen.width,
                                             screen.height
                                     );

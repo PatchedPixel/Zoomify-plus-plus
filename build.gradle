@@ -33,18 +33,15 @@ repositories {
 }
 
 base {
-    archivesName = "zoomify-neoforge"
+    archivesName = "${mod_id}-${mod_loader}"
 }
 
-java.toolchain.languageVersion = JavaLanguageVersion.of(21)
+java.toolchain.languageVersion = JavaLanguageVersion.of(25)
 
 neoForge {
     version = project.neo_version
 
-    parchment {
-        mappingsVersion = project.parchment_mappings_version
-        minecraftVersion = project.parchment_minecraft_version
-    }
+    accessTransformers.from 'src/main/resources/META-INF/accesstransformer.cfg'
 
     runs {
         client {
@@ -64,7 +61,7 @@ neoForge {
         }
 
         data {
-            data()
+            clientData()
             programArguments.addAll '--mod', project.mod_id, '--all', '--output', file('src/generated/resources/').getAbsolutePath(), '--existing', file('src/main/resources/').getAbsolutePath()
         }
 
@@ -87,8 +84,25 @@ configurations {
 }
 
 dependencies {
-    implementation "maven.modrinth:1eAoo2KR:7TVdVtxF"
-    compileOnly "maven.modrinth:DOUdJVEm:RqsNKKLK"
+    compileOnly "maven.modrinth:DOUdJVEm:9ePC9FQ4"
+
+    def twelveMonkeysVersion = "3.12.0"
+
+    implementation "com.twelvemonkeys.imageio:imageio-core:${twelveMonkeysVersion}"
+    implementation "com.twelvemonkeys.imageio:imageio-webp:${twelveMonkeysVersion}"
+    implementation "com.twelvemonkeys.imageio:imageio-metadata:${twelveMonkeysVersion}"
+
+    implementation "com.twelvemonkeys.common:common-lang:${twelveMonkeysVersion}"
+    implementation "com.twelvemonkeys.common:common-io:${twelveMonkeysVersion}"
+    implementation "com.twelvemonkeys.common:common-image:${twelveMonkeysVersion}"
+
+    jarJar "com.twelvemonkeys.imageio:imageio-core:${twelveMonkeysVersion}"
+    jarJar "com.twelvemonkeys.imageio:imageio-webp:${twelveMonkeysVersion}"
+    jarJar "com.twelvemonkeys.imageio:imageio-metadata:${twelveMonkeysVersion}"
+
+    jarJar "com.twelvemonkeys.common:common-lang:${twelveMonkeysVersion}"
+    jarJar "com.twelvemonkeys.common:common-io:${twelveMonkeysVersion}"
+    jarJar "com.twelvemonkeys.common:common-image:${twelveMonkeysVersion}"
 }
 
 var generateModMetadata = tasks.register("generateModMetadata", ProcessResources) {
@@ -96,7 +110,6 @@ var generateModMetadata = tasks.register("generateModMetadata", ProcessResources
             minecraft_version      : minecraft_version,
             minecraft_version_range: minecraft_version_range,
             neo_version            : neo_version,
-            loader_version_range   : loader_version_range,
             mod_id                 : mod_id,
             mod_name               : mod_name,
             mod_license            : mod_license,

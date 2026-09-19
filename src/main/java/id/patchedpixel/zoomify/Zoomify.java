@@ -1,6 +1,7 @@
 package id.patchedpixel.zoomify;
 
 import com.mojang.blaze3d.platform.InputConstants;
+import id.patchedpixel.zoomify.config.SettingsGuiFactory;
 import id.patchedpixel.zoomify.config.SpyglassBehaviour;
 import id.patchedpixel.zoomify.config.ZoomifySettings;
 import id.patchedpixel.zoomify.zoom.DefaultZoomHelpers;
@@ -10,19 +11,23 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.commands.Commands;
 import net.minecraft.sounds.SoundEvents;
-import net.minecraft.util.Mth;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.neoforged.api.distmarker.Dist;
 import net.neoforged.bus.api.IEventBus;
+import net.neoforged.fml.ModContainer;
 import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.*;
+import net.neoforged.neoforge.client.event.ClientTickEvent;
+import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
+import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
+import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
 import net.neoforged.neoforge.common.NeoForge;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static id.patchedpixel.zoomify.utils.MinecraftExt.setScreen;
 import static id.patchedpixel.zoomify.utils.MinecraftExt.getScreen;
+import static id.patchedpixel.zoomify.utils.MinecraftExt.zoomifyRl;
 
 @Mod(value = Zoomify.MOD_ID, dist = Dist.CLIENT)
 public class Zoomify {
@@ -31,33 +36,12 @@ public class Zoomify {
 
     public static final Logger LOGGER = LoggerFactory.getLogger("Zoomify");
 
-    private static final String ZOOM_KEY_CATEGORY = "key.category.zoomify.category";
+    private final KeyMapping.Category zoomKeyCategory = KeyMapping.Category.register(zoomifyRl("category"));
 
-    private final KeyMapping zoomKey = new KeyMapping(
-            "zoomify.key.zoom",
-            InputConstants.Type.KEYSYM,
-            InputConstants.KEY_C,
-            ZOOM_KEY_CATEGORY
-    );
-
-    private final KeyMapping secondaryZoomKey = new KeyMapping(
-            "zoomify.key.zoom.secondary",
-            InputConstants.Type.KEYSYM,
-            InputConstants.KEY_F6,
-            ZOOM_KEY_CATEGORY
-    );
-
-    private final KeyMapping scrollZoomIn = new KeyMapping(
-            "zoomify.key.zoom.in",
-            -1,
-            ZOOM_KEY_CATEGORY
-    );
-
-    private final KeyMapping scrollZoomOut = new KeyMapping(
-            "zoomify.key.zoom.out",
-            -1,
-            ZOOM_KEY_CATEGORY
-    );
+    private final KeyMapping zoomKey = new KeyMapping("zoomify.key.zoom", InputConstants.Type.KEYBOARD, InputConstants.KEY_C, zoomKeyCategory);
+    private final KeyMapping secondaryZoomKey = new KeyMapping("zoomify.key.zoom.secondary", InputConstants.Type.KEYBOARD, InputConstants.KEY_F6, zoomKeyCategory);
+    private final KeyMapping scrollZoomIn = new KeyMapping("zoomify.key.zoom.in", InputConstants.UNKNOWN.getValue(), zoomKeyCategory);
+    private final KeyMapping scrollZoomOut = new KeyMapping("zoomify.key.zoom.out", InputConstants.UNKNOWN.getValue(), zoomKeyCategory);
 
     private boolean zooming = false;
     private final ZoomHelper zoomHelper = DefaultZoomHelpers.regularZoomHelper(ZoomifySettings.Companion);
@@ -73,64 +57,18 @@ public class Zoomify {
 
     private boolean displayGui = false;
 
-    public Zoomify(IEventBus bus) {
+    public Zoomify(IEventBus bus, ModContainer modContainer) {
         INSTANCE = this;
 
         bus.addListener(this::registerKeyMappings);
 
         NeoForge.EVENT_BUS.addListener(this::registerClientCommands);
         NeoForge.EVENT_BUS.addListener(this::onClientTick);
-        NeoForge.EVENT_BUS.addListener(this::onMouseScroll);
-        NeoForge.EVENT_BUS.addListener(this::onCalculatePlayerTurn);
-        NeoForge.EVENT_BUS.addListener(this::onComputeFov);
-        NeoForge.EVENT_BUS.addListener(this::onRenderGuiPre);
-    }
 
-    private void onRenderGuiPre(RenderGuiEvent.Pre event) {
-        if (secondaryZooming && ZoomifySettings.Companion.getSecondaryHideHUDOnZoom().get()) {
-            event.setCanceled(true);
-        }
-    }
-
-    private void onMouseScroll(InputEvent.MouseScrollingEvent event) {
-        double scrollY = event.getScrollDeltaY();
-
-        if (ZoomifySettings.Companion.getScrollZoom().get()
-                && zooming && scrollY != 0
-                && !ZoomifySettings.Companion.getKeybindScrolling()) {
-            mouseZoom(scrollY);
-            event.setCanceled(true);
-        }
-    }
-
-    private void onComputeFov(ViewportEvent.ComputeFov event) {
-        float partialTicks = (float) event.getPartialTick();
-
-        if (event.usedConfiguredFov()) {
-            event.setFOV(event.getFOV() / getZoomDivisor(partialTicks));
-        } else if (ZoomifySettings.Companion.getAffectHandFov().get()) {
-            event.setFOV(event.getFOV() / getZoomDivisor(partialTicks));
-        }
-    }
-
-    private void onCalculatePlayerTurn(CalculatePlayerTurnEvent event) {
-        Minecraft minecraft = Minecraft.getInstance();
-        boolean spyglassCombine = ZoomifySettings.Companion.getSpyglassBehaviour().get() == SpyglassBehaviour.COMBINE;
-        boolean isScoping = minecraft.player != null && minecraft.player.isScoping();
-
-        if (secondaryZooming
-                || (zooming && ZoomifySettings.Companion.getCinematicCamera().get() > 0)) {
-            event.setCinematicCameraEnabled(true);
-        }
-
-        if (!spyglassCombine || !isScoping) {
-            double divisor = Mth.lerp(
-                    ZoomifySettings.Companion.getRelativeSensitivity().get() / 100.0,
-                    1.0,
-                    previousZoomDivisor
-            );
-            event.setMouseSensitivity(event.getMouseSensitivity() / divisor);
-        }
+        modContainer.registerExtensionPoint(
+                IConfigScreenFactory.class,
+                (minecraft, parentScreen) -> SettingsGuiFactory.createSettingsGui(parentScreen)
+        );
     }
 
     private Zoomify() {}

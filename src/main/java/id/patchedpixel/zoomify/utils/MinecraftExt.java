@@ -4,7 +4,7 @@ import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 
 public final class MinecraftExt {
     private MinecraftExt() {}
@@ -21,22 +21,22 @@ public final class MinecraftExt {
                 : SystemToast.SystemToastId.PERIODIC_NOTIFICATION;
 
         SystemToast.add(
-                minecraft.getToasts(),
+                minecraft.gui.toastManager(),
                 toastId,
                 title,
                 description
         );
     }
 
-    public static ResourceLocation zoomifyRl(String path) {
-        return ResourceLocation.fromNamespaceAndPath("zoomify", path);
+    public static Identifier zoomifyRl(String path) {
+        return Identifier.fromNamespaceAndPath("zoomify", path);
     }
 
     public static void setScreen(Minecraft minecraft, Screen screen) {
-        minecraft.setScreen(screen);
+        minecraft.gui.setScreen(screen);
     }
 
     public static Screen getScreen(Minecraft minecraft) {
-        return minecraft.screen;
+        return minecraft.gui.screen();
     }
 }

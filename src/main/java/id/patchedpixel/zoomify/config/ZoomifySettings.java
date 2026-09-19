@@ -1,8 +1,8 @@
 package id.patchedpixel.zoomify.config;
 
 import com.mojang.serialization.Codec;
-import dev.isxander.yacl3.config.v3.ConfigEntry;
-import dev.isxander.yacl3.config.v3.JsonFileCodecConfig;
+import id.patchedpixel.zoomify.config.lib.config.ConfigEntry;
+import id.patchedpixel.zoomify.config.lib.config.JsonFileCodecConfig;
 import id.patchedpixel.zoomify.utils.TransitionType;
 import net.neoforged.fml.loading.FMLPaths;
 

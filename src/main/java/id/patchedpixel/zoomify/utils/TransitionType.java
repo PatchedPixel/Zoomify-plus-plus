@@ -1,6 +1,6 @@
 package id.patchedpixel.zoomify.utils;
 
-import dev.isxander.yacl3.api.NameableEnum;
+import id.patchedpixel.zoomify.config.lib.api.NameableEnum;
 import net.minecraft.network.chat.Component;
 import net.minecraft.util.StringRepresentable;
 

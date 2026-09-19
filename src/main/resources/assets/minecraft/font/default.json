@@ -1,0 +1,13 @@
+{
+  "providers": [
+    {
+      "type": "bitmap",
+      "file": "zoomify_config_lib:font/reset.png",
+      "ascent": 7,
+      "height": 8,
+      "chars": [
+        "\u27f2"
+      ]
+    }
+  ]
+}

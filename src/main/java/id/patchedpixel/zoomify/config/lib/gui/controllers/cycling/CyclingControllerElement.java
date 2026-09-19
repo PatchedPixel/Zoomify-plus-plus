@@ -1,0 +1,72 @@
+package id.patchedpixel.zoomify.config.lib.gui.controllers.cycling;
+
+import com.mojang.blaze3d.platform.InputConstants;
+import com.mojang.blaze3d.platform.cursor.CursorTypes;
+import id.patchedpixel.zoomify.config.lib.api.utils.Dimension;
+import id.patchedpixel.zoomify.config.lib.gui.ConfigScreen;
+import id.patchedpixel.zoomify.config.lib.gui.controllers.ControllerWidget;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
+import org.jspecify.annotations.NonNull;
+
+public class CyclingControllerElement extends ControllerWidget<ICyclingController<?>> {
+
+    public CyclingControllerElement(ICyclingController<?> control, ConfigScreen screen, Dimension<Integer> dim) {
+        super(control, screen, dim);
+    }
+
+    @Override
+    protected void extractValueText(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
+        super.extractValueText(graphics, mouseX, mouseY, a);
+
+        if (this.hovered) {
+            graphics.requestCursor(isAvailable() ? CursorTypes.POINTING_HAND : CursorTypes.NOT_ALLOWED);
+        }
+    }
+
+    public void cycleValue(int increment) {
+        int targetIdx = control.getPendingValue() + increment;
+        if (targetIdx >= control.getCycleLength()) {
+            targetIdx -= control.getCycleLength();
+        } else if (targetIdx < 0) {
+            targetIdx += control.getCycleLength();
+        }
+        control.setPendingValue(targetIdx);
+    }
+
+    @Override
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        if (!isMouseOver(event.x(), event.y()) || (event.button() != InputConstants.MOUSE_BUTTON_LEFT && event.button() != InputConstants.MOUSE_BUTTON_RIGHT) || !isAvailable())
+            return false;
+
+        playDownSound();
+        cycleValue(event.button() == InputConstants.MOUSE_BUTTON_RIGHT || event.hasShiftDown() || event.hasControlDown() ? -1 : 1);
+        return true;
+    }
+
+    @Override
+    public boolean keyPressed(@NonNull KeyEvent event) {
+        if (!focused)
+            return false;
+
+        switch (event.key()) {
+            case InputConstants.KEY_LEFT ->
+                    cycleValue(-1);
+            case InputConstants.KEY_RIGHT ->
+                    cycleValue(1);
+            case InputConstants.KEY_RETURN, InputConstants.KEY_SPACE, InputConstants.KEY_NUMPADENTER ->
+                    cycleValue(event.hasControlDown() || event.hasShiftDown() ? -1 : 1);
+            default -> {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
+    @Override
+    protected int getHoveredControlWidth() {
+        return getUnhoveredControlWidth();
+    }
+}
