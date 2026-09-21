@@ -10,7 +10,6 @@ import net.minecraft.util.Mth;
 import org.joml.Vector2i;
 import org.objectweb.asm.Opcodes;
 import org.spongepowered.asm.mixin.Mixin;
-import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyArg;
@@ -25,14 +24,12 @@ public class MouseMixin {
     )
     private void scrollStepCounter(
             CallbackInfo ci,
-            @Local Vector2i scroll
+            @Local int i
     ) {
-        int scrollY = scroll.y;
-
         if (ZoomifySettings.Companion.getScrollZoom().get()
-                && Zoomify.INSTANCE.getZooming() && scrollY != 0
+                && Zoomify.INSTANCE.getZooming() && i != 0
                 && !ZoomifySettings.Companion.getKeybindScrolling()) {
-            Zoomify.mouseZoom(scrollY);
+            Zoomify.mouseZoom(i);
             ci.cancel();
         }
     }

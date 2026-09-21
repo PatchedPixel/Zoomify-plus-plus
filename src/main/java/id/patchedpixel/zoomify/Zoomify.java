@@ -13,35 +13,57 @@ import net.minecraft.commands.Commands;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.neoforged.api.distmarker.Dist;
-import net.neoforged.bus.api.IEventBus;
-import net.neoforged.fml.ModContainer;
-import net.neoforged.fml.common.Mod;
-import net.neoforged.neoforge.client.event.ClientTickEvent;
-import net.neoforged.neoforge.client.event.RegisterClientCommandsEvent;
-import net.neoforged.neoforge.client.event.RegisterKeyMappingsEvent;
-import net.neoforged.neoforge.client.gui.IConfigScreenFactory;
-import net.neoforged.neoforge.common.NeoForge;
+import net.minecraftforge.api.distmarker.Dist;
+import net.minecraftforge.api.distmarker.OnlyIn;
+import net.minecraftforge.client.ConfigScreenHandler;
+import net.minecraftforge.client.event.RegisterClientCommandsEvent;
+import net.minecraftforge.client.event.RegisterKeyMappingsEvent;
+import net.minecraftforge.common.MinecraftForge;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.fml.ModLoadingContext;
+import net.minecraftforge.fml.common.Mod;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import static id.patchedpixel.zoomify.utils.MinecraftExt.setScreen;
 import static id.patchedpixel.zoomify.utils.MinecraftExt.getScreen;
-import static id.patchedpixel.zoomify.utils.MinecraftExt.zoomifyRl;
 
-@Mod(value = Zoomify.MOD_ID, dist = Dist.CLIENT)
+@OnlyIn(Dist.CLIENT)
+@Mod(Zoomify.MOD_ID)
 public class Zoomify {
     public static final String MOD_ID = "zoomify";
     public static Zoomify INSTANCE;
 
     public static final Logger LOGGER = LoggerFactory.getLogger("Zoomify");
 
-    private final KeyMapping.Category zoomKeyCategory = KeyMapping.Category.register(zoomifyRl("category"));
+    private static final String ZOOM_KEY_CATEGORY = "key.category.zoomify.category";
 
-    private final KeyMapping zoomKey = new KeyMapping("zoomify.key.zoom", InputConstants.Type.KEYBOARD, InputConstants.KEY_C, zoomKeyCategory);
-    private final KeyMapping secondaryZoomKey = new KeyMapping("zoomify.key.zoom.secondary", InputConstants.Type.KEYBOARD, InputConstants.KEY_F6, zoomKeyCategory);
-    private final KeyMapping scrollZoomIn = new KeyMapping("zoomify.key.zoom.in", InputConstants.UNKNOWN.getValue(), zoomKeyCategory);
-    private final KeyMapping scrollZoomOut = new KeyMapping("zoomify.key.zoom.out", InputConstants.UNKNOWN.getValue(), zoomKeyCategory);
+    private final KeyMapping zoomKey = new KeyMapping(
+            "zoomify.key.zoom",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_C,
+            ZOOM_KEY_CATEGORY
+    );
+
+    private final KeyMapping secondaryZoomKey = new KeyMapping(
+            "zoomify.key.zoom.secondary",
+            InputConstants.Type.KEYSYM,
+            InputConstants.KEY_F6,
+            ZOOM_KEY_CATEGORY
+    );
+
+    private final KeyMapping scrollZoomIn = new KeyMapping(
+            "zoomify.key.zoom.in",
+            -1,
+            ZOOM_KEY_CATEGORY
+    );
+
+    private final KeyMapping scrollZoomOut = new KeyMapping(
+            "zoomify.key.zoom.out",
+            -1,
+            ZOOM_KEY_CATEGORY
+    );
 
     private boolean zooming = false;
     private final ZoomHelper zoomHelper = DefaultZoomHelpers.regularZoomHelper(ZoomifySettings.Companion);
@@ -57,21 +79,23 @@ public class Zoomify {
 
     private boolean displayGui = false;
 
-    public Zoomify(IEventBus bus, ModContainer modContainer) {
+    public Zoomify() {
         INSTANCE = this;
 
-        bus.addListener(this::registerKeyMappings);
+        FMLJavaModLoadingContext.get()
+                .getModEventBus()
+                .addListener(this::registerKeyMappings);
 
-        NeoForge.EVENT_BUS.addListener(this::registerClientCommands);
-        NeoForge.EVENT_BUS.addListener(this::onClientTick);
+        MinecraftForge.EVENT_BUS.addListener(this::registerClientCommands);
+        MinecraftForge.EVENT_BUS.addListener(this::onClientTick);
 
-        modContainer.registerExtensionPoint(
-                IConfigScreenFactory.class,
-                (minecraft, parentScreen) -> SettingsGuiFactory.createSettingsGui(parentScreen)
+        ModLoadingContext.get().registerExtensionPoint(
+                ConfigScreenHandler.ConfigScreenFactory.class,
+                () -> new ConfigScreenHandler.ConfigScreenFactory(
+                        (minecraft, parentScreen) -> SettingsGuiFactory.createSettingsGui(parentScreen)
+                )
         );
     }
-
-    private Zoomify() {}
 
     public boolean getZooming() {
         return zooming;
@@ -109,8 +133,10 @@ public class Zoomify {
         );
     }
 
-    public void onClientTick(ClientTickEvent.Post event) {
-        tick(Minecraft.getInstance());
+    public void onClientTick(TickEvent.ClientTickEvent event) {
+        if (event.phase == TickEvent.Phase.END) {
+            tick(Minecraft.getInstance());
+        }
     }
 
     private void tick(Minecraft minecraft) {

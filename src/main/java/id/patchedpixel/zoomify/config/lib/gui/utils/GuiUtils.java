@@ -1,25 +1,49 @@
 package id.patchedpixel.zoomify.config.lib.gui.utils;
 
-import id.patchedpixel.zoomify.mixins.GuiAccessor;
-import id.patchedpixel.zoomify.config.lib.platform.ConfigPlatform;
-import net.minecraft.client.Minecraft;
+import com.mojang.blaze3d.platform.NativeImage;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.components.WidgetSprites;
-import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.renderer.MultiBufferSource;
 import net.minecraft.locale.Language;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
-import net.minecraft.network.chat.Style;
-import net.minecraft.util.FormattedCharSequence;
+import net.minecraft.resources.ResourceLocation;
+
+import java.util.function.Consumer;
 
 public class GuiUtils {
+    public static void drawSpecial(GuiGraphics graphics, Consumer<MultiBufferSource> consumer) {
+        MultiBufferSource.BufferSource bufferSource = graphics.bufferSource();
+        consumer.accept(bufferSource);
+        bufferSource.endBatch();
+    }
 
-    public static final WidgetSprites BUTTON_SPRITES = new WidgetSprites(
-            ConfigPlatform.mcRl("widget/button"), // normal
-            ConfigPlatform.mcRl("widget/button_disabled"), // disabled & !focused
-            ConfigPlatform.mcRl("widget/button_highlighted"), // !disabled & focused
-            ConfigPlatform.mcRl("widget/slider_highlighted") // disabled & focused
-    );
+    public static void blitGuiTex(GuiGraphics graphics, ResourceLocation texture, int x, int y, float u, float v, int textureWidth, int textureHeight, int width, int height) {
+        graphics.blit(
+                texture,
+                x, y,
+                u, v,
+                textureWidth, textureHeight,
+                width, height
+        );
+    }
+
+    public static void blitGuiTexColor(GuiGraphics graphics, ResourceLocation texture, int x, int y, float u, float v, int textureWidth, int textureHeight, int width, int height, int color) {
+        float a = (color >> 24 & 255) / 255.0F;
+        float r = (color >> 16 & 255) / 255.0F;
+        float g = (color >> 8 & 255) / 255.0F;
+        float b = (color & 255) / 255.0F;
+        graphics.setColor(r, g, b, a);
+        graphics.blit(
+                texture,
+                x, y,
+                u, v,
+                textureWidth, textureHeight,
+                width, height
+        );
+        graphics.setColor(1.0F, 1.0F, 1.0F, 1.0F);
+    }
+
 
     public static MutableComponent translatableFallback(String key, Component fallback) {
         if (Language.getInstance().has(key))
@@ -45,23 +69,16 @@ public class GuiUtils {
         return string;
     }
 
-    public static FormattedCharSequence applyFallbackStyle(FormattedCharSequence seq, Style fallback) {
-        return output -> seq.accept((c, s, t) -> output.accept(c, s.applyTo(fallback), t));
-    }
 
-    public static void setScreen(Screen screen, boolean ignoreVanilla) {
-        if (ignoreVanilla) {
-            ((GuiAccessor) Minecraft.getInstance().gui).config$setScreen(screen);
-        } else {
-            Minecraft.getInstance().gui.setScreen(screen);
-        }
-    }
+    public static void setPixelARGB(NativeImage nativeImage, int x, int y, int argb) {
+        // In 1.21.2+, you set the pixel color in ARGB format, where it internally converts to ABGR.
+        // Before this, you need to directly set the pixel color in ABGR format.
 
-    public static void setScreen(Screen screen) {
-        setScreen(screen, false);
-    }
-
-    public static Screen getCurrentScreen() {
-        return Minecraft.getInstance().gui.screen();
+        int a = (argb >> 24) & 0xFF;
+        int r = (argb >> 16) & 0xFF;
+        int g = (argb >> 8) & 0xFF;
+        int b = argb & 0xFF;
+        int abgr = (a << 24) | (b << 16) | (g << 8) | r;
+        nativeImage.setPixelRGBA(x, y, abgr); // method name is misleading. It's actually ABGR.
     }
 }

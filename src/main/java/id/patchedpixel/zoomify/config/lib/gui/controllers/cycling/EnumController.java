@@ -4,6 +4,7 @@ import id.patchedpixel.zoomify.config.lib.api.NameableEnum;
 import id.patchedpixel.zoomify.config.lib.api.Option;
 import id.patchedpixel.zoomify.config.lib.api.controller.ValueFormatter;
 import net.minecraft.network.chat.Component;
+import net.minecraft.util.OptionEnum;
 
 import java.util.Arrays;
 import java.util.function.Function;
@@ -20,6 +21,8 @@ public class EnumController<T extends Enum<T>> extends CyclingListController<T> 
         return value -> {
             if (value instanceof NameableEnum nameableEnum)
                 return nameableEnum.getDisplayName();
+            if (value instanceof OptionEnum translatableOption)
+                return translatableOption.getCaption();
             return Component.literal(value.toString());
         };
     }

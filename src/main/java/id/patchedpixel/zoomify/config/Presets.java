@@ -1,6 +1,6 @@
 package id.patchedpixel.zoomify.config;
 
-import id.patchedpixel.zoomify.config.lib.config.ConfigEntry;
+import id.patchedpixel.zoomify.config.lib.config.v3.ConfigEntry;
 import id.patchedpixel.zoomify.utils.TransitionType;
 import net.minecraft.network.chat.Component;
 

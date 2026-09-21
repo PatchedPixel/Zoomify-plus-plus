@@ -2,8 +2,8 @@ package id.patchedpixel.zoomify.config.demo;
 
 import id.patchedpixel.zoomify.config.lib.gui.image.impl.AnimatedDynamicTextureImage;
 import id.patchedpixel.zoomify.zoom.ZoomHelper;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -14,8 +14,8 @@ public class FirstPersonDemo extends ZoomDemoImageRenderer {
     public static final int TEX_WIDTH = 1916;
     public static final int TEX_HEIGHT = 910;
 
-    public static final Identifier WORLD_TEXTURE = zoomifyRl("textures/demo/zoom-world.webp");
-    public static final Identifier HAND_TEXTURE = zoomifyRl("textures/demo/zoom-hand.webp");
+    public static final ResourceLocation WORLD_TEXTURE = zoomifyRl("textures/demo/zoom-world.webp");
+    public static final ResourceLocation HAND_TEXTURE = zoomifyRl("textures/demo/zoom-hand.webp");
 
     private boolean keepHandFov = false;
 
@@ -35,7 +35,7 @@ public class FirstPersonDemo extends ZoomDemoImageRenderer {
     }
 
     @Override
-    public int render(GuiGraphicsExtractor graphics, int x, int y, int renderWidth, float deltaTime) {
+    public int render(GuiGraphics graphics, int x, int y, int renderWidth, float deltaTime) {
         double ratio = renderWidth / (double) TEX_WIDTH;
         int renderHeight = (int) (TEX_HEIGHT * ratio);
         if (!handRenderer.isDone() || !worldRenderer.isDone()) {
@@ -44,27 +44,27 @@ public class FirstPersonDemo extends ZoomDemoImageRenderer {
 
         graphics.enableScissor(x, y, x + renderWidth, y + renderHeight);
 
-        graphics.pose().pushMatrix();
-        graphics.pose().translate((float) x, (float) y);
-        graphics.pose().scale((float) ratio, (float) ratio);
+        graphics.pose().pushPose();
+        graphics.pose().translate((float) x, (float) y, 0.0F);
+        graphics.pose().scale((float) ratio, (float) ratio, 1.0F);
 
         float zoomScale = (float) getZoomHelper().getZoomDivisor(deltaTime);
-        graphics.pose().pushMatrix();
-        graphics.pose().translate(TEX_WIDTH / 2f, TEX_HEIGHT / 2f);
-        graphics.pose().scale(zoomScale, zoomScale);
-        graphics.pose().translate(-TEX_WIDTH / 2f, -TEX_HEIGHT / 2f);
+        graphics.pose().pushPose();
+        graphics.pose().translate(TEX_WIDTH / 2f, TEX_HEIGHT / 2f, 0.0F);
+        graphics.pose().scale(zoomScale, zoomScale, 1.0F);
+        graphics.pose().translate(-TEX_WIDTH / 2f, -TEX_HEIGHT / 2f, 0.0F);
 
         try {
             worldRenderer.get().render(graphics, 0, 0, TEX_WIDTH, deltaTime);
 
-            if (keepHandFov) graphics.pose().popMatrix();
+            if (keepHandFov) graphics.pose().popPose();
             handRenderer.get().render(graphics, 0, 0, TEX_WIDTH, deltaTime);
-            if (!keepHandFov) graphics.pose().popMatrix();
+            if (!keepHandFov) graphics.pose().popPose();
         } catch (Exception e) {
             throw new RuntimeException(e);
         }
 
-        graphics.pose().popMatrix();
+        graphics.pose().popPose();
 
         graphics.disableScissor();
 

@@ -4,8 +4,8 @@ import id.patchedpixel.zoomify.config.lib.gui.image.ImageRenderer;
 import id.patchedpixel.zoomify.config.lib.gui.image.ImageRendererManager;
 import id.patchedpixel.zoomify.config.lib.gui.image.impl.AnimatedDynamicTextureImage;
 import id.patchedpixel.zoomify.zoom.ZoomHelper;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -43,7 +43,7 @@ public abstract class ZoomDemoImageRenderer implements ImageRenderer {
     }
 
     @Override
-    public abstract int render(GuiGraphicsExtractor graphics, int x, int y, int renderWidth, float deltaTime);
+    public abstract int render(GuiGraphics graphics, int x, int y, int renderWidth, float deltaTime);
 
     @Override
     public void tick() {
@@ -56,7 +56,7 @@ public abstract class ZoomDemoImageRenderer implements ImageRenderer {
         zoomControl.pause(this);
     }
 
-    protected static CompletableFuture<AnimatedDynamicTextureImage> makeWebp(Identifier id) {
+    protected static CompletableFuture<AnimatedDynamicTextureImage> makeWebp(ResourceLocation id) {
         return ImageRendererManager.registerOrGetImage(id, () -> AnimatedDynamicTextureImage.createWEBPFromTexture(id));
     }
 }

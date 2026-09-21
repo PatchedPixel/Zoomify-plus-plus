@@ -4,7 +4,7 @@ import id.patchedpixel.zoomify.config.lib.gui.image.ImageRenderer;
 import id.patchedpixel.zoomify.config.lib.impl.OptionDescriptionImpl;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.nio.file.Path;
 import java.util.Collection;
@@ -24,6 +24,13 @@ public interface OptionDescription {
      */
     Component text();
 
+    /**
+     * The image to display with the description. If the Optional is empty, no image has been provided.
+     * Usually, the image renderers are constructed asynchronously, so this method returns a {@link CompletableFuture}.
+     * <p>
+     * Image renderers are cached throughout the whole lifecycle of the game, and should not be generated more than once
+     * per image. See {@link ImageRenderer#getOrMakeAsync(ResourceLocation, Supplier)} for implementation details.
+     */
     CompletableFuture<Optional<ImageRenderer>> image();
 
     /**
@@ -69,7 +76,7 @@ public interface OptionDescription {
          * @param height the height of the texture
          * @return this builder
          */
-        Builder image(Identifier image, int width, int height);
+        Builder image(ResourceLocation image, int width, int height);
 
         /**
          * Sets a static image to display with the description. This is backed by a regular minecraft resource
@@ -84,7 +91,7 @@ public interface OptionDescription {
          * @param textureHeight the height of whole texture file
          * @return this builder
          */
-        Builder image(Identifier image, float u, float v, int width, int height, int textureWidth, int textureHeight);
+        Builder image(ResourceLocation image, float u, float v, int width, int height, int textureWidth, int textureHeight);
 
         /**
          * Sets a static image to display with the description. This is backed by a file on disk.
@@ -94,7 +101,7 @@ public interface OptionDescription {
          * @param uniqueLocation the unique identifier for the image, used for caching and resource manager registrar
          * @return this builder
          */
-        Builder image(Path path, Identifier uniqueLocation);
+        Builder image(Path path, ResourceLocation uniqueLocation);
 
         /**
          * Sets a static OR ANIMATED webP image to display with the description. This is backed by a regular minecraft resource
@@ -103,7 +110,7 @@ public interface OptionDescription {
          * @param image the location of the image to display from the resource manager
          * @return this builder
          */
-        Builder webpImage(Identifier image);
+        Builder webpImage(ResourceLocation image);
 
         /**
          * Sets a static OR ANIMATED webP image to display with the description. This is backed by a file on disk.
@@ -113,7 +120,7 @@ public interface OptionDescription {
          * @param uniqueLocation the unique identifier for the image, used for caching and resource manager registrar
          * @return this builder
          */
-        Builder webpImage(Path path, Identifier uniqueLocation);
+        Builder webpImage(Path path, ResourceLocation uniqueLocation);
 
         /**
          * Sets a custom image renderer to display with the description.
@@ -121,7 +128,7 @@ public interface OptionDescription {
          * <p>
          * However, <strong>THIS IS NOT API SAFE!</strong> As part of the gui package, things
          * may change that could break compatibility with future versions of YACL.
-         * A helpful utility (that is also not API safe) is {@link id.patchedpixel.zoomify.config.lib.gui.image.ImageRendererManager#registerOrGetImage(Identifier, Supplier)}
+         * A helpful utility (that is also not API safe) is {@link id.patchedpixel.zoomify.config.lib.gui.image.ImageRendererManager#registerOrGetImage(ResourceLocation, Supplier)}
          * which will cache the image renderer for the whole game lifecycle and construct it asynchronously to the render thread.
          * @param image the image renderer to display
          * @return this builder
@@ -134,7 +141,7 @@ public interface OptionDescription {
          * <p>
          * However, <strong>THIS IS NOT API SAFE!</strong> As part of the gui package, things
          * may change that could break compatibility with future versions of YACL.
-         * A helpful utility (that is also not API safe) is {@link id.patchedpixel.zoomify.config.lib.gui.image.ImageRendererManager#registerOrGetImage(Identifier, Supplier)}
+         * A helpful utility (that is also not API safe) is {@link id.patchedpixel.zoomify.config.lib.gui.image.ImageRendererManager#registerOrGetImage(ResourceLocation, Supplier)}
          * which will cache the image renderer for the whole game lifecycle and construct it asynchronously to the render thread.
          * @param image the image renderer to display
          * @return this builder
@@ -151,7 +158,7 @@ public interface OptionDescription {
          * @return this builder
          */
         @Deprecated
-        Builder gifImage(Identifier image);
+        Builder gifImage(ResourceLocation image);
 
         /**
          * Sets an animated GIF image to display with the description. This is backed by a file on disk.
@@ -162,7 +169,7 @@ public interface OptionDescription {
          * @return this builder
          */
         @Deprecated
-        Builder gifImage(Path path, Identifier uniqueLocation);
+        Builder gifImage(Path path, ResourceLocation uniqueLocation);
 
         OptionDescription build();
     }

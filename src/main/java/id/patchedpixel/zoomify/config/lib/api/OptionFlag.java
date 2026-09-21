@@ -1,7 +1,6 @@
 package id.patchedpixel.zoomify.config.lib.api;
 
 import id.patchedpixel.zoomify.config.lib.gui.RequireRestartScreen;
-import id.patchedpixel.zoomify.config.lib.gui.utils.GuiUtils;
 import net.minecraft.client.Minecraft;
 
 import java.util.function.Consumer;
@@ -13,15 +12,12 @@ import java.util.function.Consumer;
 @FunctionalInterface
 public interface OptionFlag extends Consumer<Minecraft> {
     /** Warns the user that a game restart is required for the changes to take effect */
-    OptionFlag GAME_RESTART = client -> GuiUtils.setScreen(new RequireRestartScreen(GuiUtils.getCurrentScreen()));
+    OptionFlag GAME_RESTART = client -> client.setScreen(new RequireRestartScreen(client.screen));
 
     /** Reloads chunks upon applying (F3+A) */
-    OptionFlag RELOAD_CHUNKS =
-            client -> client.levelExtractor.allChanged();
+    OptionFlag RELOAD_CHUNKS = client -> client.levelRenderer.allChanged();
 
-    @Deprecated
-    OptionFlag WORLD_RENDER_UPDATE =
-            RELOAD_CHUNKS;
+    OptionFlag WORLD_RENDER_UPDATE = client -> client.levelRenderer.needsUpdate();
 
     OptionFlag ASSET_RELOAD = Minecraft::delayTextureReload;
 }

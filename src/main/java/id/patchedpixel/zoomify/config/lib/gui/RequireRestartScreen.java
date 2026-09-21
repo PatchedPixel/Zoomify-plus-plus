@@ -1,6 +1,5 @@
 package id.patchedpixel.zoomify.config.lib.gui;
 
-import id.patchedpixel.zoomify.config.lib.gui.utils.GuiUtils;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.ConfirmScreen;
@@ -11,7 +10,7 @@ public class RequireRestartScreen extends ConfirmScreen {
     public RequireRestartScreen(Screen parent) {
         super(option -> {
             if (option) Minecraft.getInstance().stop();
-            else GuiUtils.setScreen(parent);
+            else Minecraft.getInstance().setScreen(parent);
         },
                 Component.translatable("yacl.restart.title").withStyle(ChatFormatting.RED, ChatFormatting.BOLD),
                 Component.translatable("yacl.restart.message"),

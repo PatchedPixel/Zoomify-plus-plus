@@ -5,9 +5,7 @@ import id.patchedpixel.zoomify.config.lib.api.Option;
 import id.patchedpixel.zoomify.config.lib.api.controller.DoubleSliderControllerBuilder;
 import id.patchedpixel.zoomify.config.lib.api.controller.ValueFormatter;
 import id.patchedpixel.zoomify.config.lib.gui.controllers.slider.DoubleSliderController;
-import net.minecraft.network.chat.Component;
 
-import java.util.function.Function;
 
 public class DoubleSliderControllerBuilderImpl extends AbstractControllerBuilderImpl<Double> implements DoubleSliderControllerBuilder {
     private double min, max;

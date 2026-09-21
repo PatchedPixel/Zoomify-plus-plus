@@ -2,8 +2,8 @@ package id.patchedpixel.zoomify.config.demo;
 
 import id.patchedpixel.zoomify.config.lib.gui.image.impl.AnimatedDynamicTextureImage;
 import id.patchedpixel.zoomify.zoom.ZoomHelper;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
-import net.minecraft.resources.Identifier;
+import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Optional;
 import java.util.concurrent.CompletableFuture;
@@ -14,8 +14,8 @@ public class ThirdPersonDemo extends ZoomDemoImageRenderer {
     public static final int TEX_WIDTH = 1915;
     public static final int TEX_HEIGHT = 910;
 
-    public static final Identifier PLAYER_VIEW = zoomifyRl("textures/demo/third-person-view.webp");
-    public static final Identifier HUD_TEXTURE = zoomifyRl("textures/demo/third-person-hud.webp");
+    public static final ResourceLocation PLAYER_VIEW = zoomifyRl("textures/demo/third-person-view.webp");
+    public static final ResourceLocation HUD_TEXTURE = zoomifyRl("textures/demo/third-person-hud.webp");
 
     private final CompletableFuture<AnimatedDynamicTextureImage> thirdPersonViewRenderer = makeWebp(PLAYER_VIEW);
     private final CompletableFuture<AnimatedDynamicTextureImage> hudRenderer = makeWebp(HUD_TEXTURE);
@@ -35,7 +35,7 @@ public class ThirdPersonDemo extends ZoomDemoImageRenderer {
     }
 
     @Override
-    public int render(GuiGraphicsExtractor graphics, int x, int y, int renderWidth, float deltaTime) {
+    public int render(GuiGraphics graphics, int x, int y, int renderWidth, float deltaTime) {
         double ratio = renderWidth / (double) TEX_WIDTH;
         int renderHeight = (int) (TEX_HEIGHT * ratio);
         if (!thirdPersonViewRenderer.isDone() || !hudRenderer.isDone()) {
@@ -44,20 +44,20 @@ public class ThirdPersonDemo extends ZoomDemoImageRenderer {
 
         graphics.enableScissor(x, y, x + renderWidth, y + renderHeight);
 
-        graphics.pose().pushMatrix();
-        graphics.pose().translate((float) x, (float) y);
-        graphics.pose().scale((float) ratio, (float) ratio);
+        graphics.pose().pushPose();
+        graphics.pose().translate((float) x, (float) y, 0.0F);
+        graphics.pose().scale((float) ratio, (float) ratio, 1.0F);
 
         float zoomScale = (float) getZoomHelper().getZoomDivisor(deltaTime);
-        graphics.pose().pushMatrix();
-        graphics.pose().translate(FirstPersonDemo.TEX_WIDTH / 2f, FirstPersonDemo.TEX_HEIGHT / 2f);
-        graphics.pose().scale(zoomScale, zoomScale);
-        graphics.pose().translate(-FirstPersonDemo.TEX_WIDTH / 2f, -FirstPersonDemo.TEX_HEIGHT / 2f);
+        graphics.pose().pushPose();
+        graphics.pose().translate(FirstPersonDemo.TEX_WIDTH / 2f, FirstPersonDemo.TEX_HEIGHT / 2f, 0.0F);
+        graphics.pose().scale(zoomScale, zoomScale, 1.0F);
+        graphics.pose().translate(-FirstPersonDemo.TEX_WIDTH / 2f, -FirstPersonDemo.TEX_HEIGHT / 2f, 0.0F);
 
         try {
             thirdPersonViewRenderer.get().render(graphics, 0, 0, TEX_WIDTH, deltaTime);
 
-            graphics.pose().popMatrix();
+            graphics.pose().popPose();
 
             if (renderHud)
                 hudRenderer.get().render(graphics, 0, 0, TEX_WIDTH, deltaTime);
@@ -65,7 +65,7 @@ public class ThirdPersonDemo extends ZoomDemoImageRenderer {
             throw new RuntimeException(e);
         }
 
-        graphics.pose().popMatrix();
+        graphics.pose().popPose();
         graphics.disableScissor();
 
         return renderHeight;

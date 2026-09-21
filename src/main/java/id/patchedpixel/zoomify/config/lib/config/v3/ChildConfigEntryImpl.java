@@ -1,4 +1,4 @@
-package id.patchedpixel.zoomify.config.lib.config;
+package id.patchedpixel.zoomify.config.lib.config.v3;
 
 import com.mojang.serialization.DataResult;
 import com.mojang.serialization.DynamicOps;
@@ -34,7 +34,7 @@ public class ChildConfigEntryImpl<T extends CodecConfig<T>> extends AbstractRead
     public <R> boolean decode(R encoded, DynamicOps<R> ops) {
         DataResult<T> result = mapCodec.decoder().parse(ops, encoded);
 
-        Optional<DataResult.Error<T>> error = result.error();
+        Optional<DataResult.PartialResult<T>> error = result.error();
         if (error.isPresent()) {
             ConfigConstants.LOGGER.error("Failed to decode entry {}: {}", this.fieldName(), error.get().message());
             return false;

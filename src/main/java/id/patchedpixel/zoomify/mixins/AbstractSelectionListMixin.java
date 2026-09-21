@@ -16,12 +16,8 @@ public abstract class AbstractSelectionListMixin<E extends AbstractSelectionList
 
     /**
      * Mojang use the field access of children to get max index to loop through keyboard navigation to find the next entry.
-     * YACL modifies these children() method to filter out hidden entries, so we need to wrap the field access with the
+     * YACL modifies these children() method to filter out hidden entries, so we need to redirect the field access to the
      * method, so we don't get ArrayIndexOutOfBoundsException.
-     * <p>
-     * Uses MixinExtras' {@link WrapOperation} instead of a plain {@code @Redirect} so this chains cleanly with any other
-     * mod (including a separately installed copy of YACL) that also wraps this same field access, instead of hard
-     * conflicting with it at mixin-apply time.
      */
     @WrapOperation(method = "nextEntry(Lnet/minecraft/client/gui/navigation/ScreenDirection;Ljava/util/function/Predicate;Lnet/minecraft/client/gui/components/AbstractSelectionList$Entry;)Lnet/minecraft/client/gui/components/AbstractSelectionList$Entry;", at = @At(value = "FIELD", target = "Lnet/minecraft/client/gui/components/AbstractSelectionList;children:Ljava/util/List;", opcode = Opcodes.GETFIELD))
     private List<E> modifyChildrenCall(AbstractSelectionList<E> instance, Operation<List<E>> original) {

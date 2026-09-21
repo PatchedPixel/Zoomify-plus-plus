@@ -3,7 +3,7 @@ package id.patchedpixel.zoomify.config.lib.gui.image;
 import com.mojang.blaze3d.systems.RenderSystem;
 import id.patchedpixel.zoomify.config.lib.impl.utils.ConfigConstants;
 import net.minecraft.client.Minecraft;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.Map;
 import java.util.Optional;
@@ -13,9 +13,9 @@ import java.util.function.Supplier;
 public class ImageRendererManager {
     private static final ExecutorService SINGLE_THREAD_EXECUTOR = Executors.newSingleThreadExecutor(task -> new Thread(task, "Config Image Prep"));
 
-    private static final Map<Identifier, CompletableFuture<ImageRenderer>> IMAGE_CACHE = new ConcurrentHashMap<>();
+    private static final Map<ResourceLocation, CompletableFuture<ImageRenderer>> IMAGE_CACHE = new ConcurrentHashMap<>();
 
-    public static <T extends ImageRenderer> Optional<T> getImage(Identifier id) {
+    public static <T extends ImageRenderer> Optional<T> getImage(ResourceLocation id) {
         if (IMAGE_CACHE.containsKey(id)) {
             return Optional.ofNullable((T) IMAGE_CACHE.get(id).getNow(null));
         }
@@ -24,7 +24,7 @@ public class ImageRendererManager {
     }
 
     @SuppressWarnings("unchecked")
-    public static <T extends ImageRenderer> CompletableFuture<T> registerOrGetImage(Identifier id, Supplier<ImageRendererFactory> factorySupplier) {
+    public static <T extends ImageRenderer> CompletableFuture<T> registerOrGetImage(ResourceLocation id, Supplier<ImageRendererFactory> factorySupplier) {
         if (IMAGE_CACHE.containsKey(id)) {
             return (CompletableFuture<T>) IMAGE_CACHE.get(id);
         }
@@ -46,11 +46,11 @@ public class ImageRendererManager {
     }
 
     @Deprecated
-    public static <T extends ImageRenderer> CompletableFuture<T> registerImage(Identifier id, ImageRendererFactory factory) {
+    public static <T extends ImageRenderer> CompletableFuture<T> registerImage(ResourceLocation id, ImageRendererFactory factory) {
         return registerOrGetImage(id, () -> factory);
     }
 
-    private static <T extends ImageRenderer> void completeImageFactory(Identifier id, Supplier<Optional<ImageRendererFactory.ImageSupplier>> supplier, CompletableFuture<ImageRenderer> future) {
+    private static <T extends ImageRenderer> void completeImageFactory(ResourceLocation id, Supplier<Optional<ImageRendererFactory.ImageSupplier>> supplier, CompletableFuture<ImageRenderer> future) {
         RenderSystem.assertOnRenderThread();
 
         ImageRendererFactory.ImageSupplier completableImage = supplier.get().orElse(null);
@@ -85,7 +85,7 @@ public class ImageRendererManager {
         });
     }
 
-    static Optional<ImageRendererFactory.ImageSupplier> safelyPrepareFactory(Identifier id, ImageRendererFactory factory) {
+    static Optional<ImageRendererFactory.ImageSupplier> safelyPrepareFactory(ResourceLocation id, ImageRendererFactory factory) {
         try {
             return Optional.of(factory.prepareImage());
         } catch (Exception e) {

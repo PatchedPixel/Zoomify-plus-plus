@@ -1,4 +1,4 @@
-package id.patchedpixel.zoomify.config.lib.config;
+package id.patchedpixel.zoomify.config.lib.config.v3;
 
 import com.mojang.serialization.DynamicOps;
 import com.mojang.serialization.RecordBuilder;

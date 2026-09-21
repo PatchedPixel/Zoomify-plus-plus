@@ -1,24 +1,21 @@
 package id.patchedpixel.zoomify.config.lib.gui.tab;
 
 import com.google.common.collect.ImmutableList;
-import id.patchedpixel.zoomify.config.lib.gui.render.ColorGradientRenderState;
 import id.patchedpixel.zoomify.mixins.TabNavigationBarAccessor;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.gui.GuiGraphics;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.TabButton;
 import net.minecraft.client.gui.components.events.GuiEventListener;
-import net.minecraft.client.gui.components.tabs.MenuTabBar;
 import net.minecraft.client.gui.components.tabs.Tab;
 import net.minecraft.client.gui.components.tabs.TabManager;
+import net.minecraft.client.gui.components.tabs.TabNavigationBar;
 import net.minecraft.client.gui.layouts.Layout;
-import net.minecraft.client.gui.layouts.LinearLayout;
 import net.minecraft.util.Mth;
 import org.jetbrains.annotations.Nullable;
 
-public class ScrollableNavigationBar
-        extends MenuTabBar {
+public class ScrollableNavigationBar extends TabNavigationBar {
     private static final int NAVBAR_MARGIN = 28;
 
     private static final Font font = Minecraft.getInstance().font;
@@ -29,11 +26,7 @@ public class ScrollableNavigationBar
     private final TabNavigationBarAccessor accessor;
 
     public ScrollableNavigationBar(int width, TabManager tabManager, Iterable<? extends Tab> tabs) {
-        var tabsList = ImmutableList.<Tab>copyOf(tabs);
-        var tabButtonsList = ImmutableList.copyOf(tabsList.stream()
-                .<TabButton>map(tab -> new MenuTabButton(tabManager, tab, 0, 24))
-                .toList());
-        super(0, 0, width, 24, tabManager, tabButtonsList, tabsList);
+        super(width, tabManager, ImmutableList.copyOf(tabs));
         this.accessor = (TabNavigationBarAccessor) this;
 
         // add tab tooltips to the tab buttons
@@ -45,12 +38,9 @@ public class ScrollableNavigationBar
     }
 
     @Override
-    public void arrangeElements(final int pWidth) {
-        int width = pWidth;
-        Layout layout = this.layout;
-
+    public void arrangeElements() {
         ImmutableList<TabButton> tabButtons = accessor.config$getTabButtons();
-        int noScrollWidth = width - NAVBAR_MARGIN*2;
+        int noScrollWidth = accessor.config$getWidth() - NAVBAR_MARGIN*2;
 
         int allTabsWidth = 0;
         // first pass: set the width of each tab button
@@ -73,58 +63,29 @@ public class ScrollableNavigationBar
             allTabsWidth = noScrollWidth;
         }
 
+        Layout layout = ((TabNavigationBarAccessor) this).config$getLayout();
         layout.arrangeElements();
         layout.setY(0);
         scrollOffset = 0;
 
-        layout.setX(Math.max((width - allTabsWidth) / 2, NAVBAR_MARGIN));
+        layout.setX(Math.max((accessor.config$getWidth() - allTabsWidth) / 2, NAVBAR_MARGIN));
         this.maxScrollOffset = Math.max(0, allTabsWidth - noScrollWidth);
     }
 
     @Override
-    public void extractWidgetRenderState(GuiGraphicsExtractor graphics, int mouseX, int mouseY, float a) {
-        graphics.pose().pushMatrix();
+    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
+        graphics.pose().pushPose();
         // render option list BELOW the navbar without need to scissor
+        graphics.pose().translate(0, 0, 10);
 
-        super.extractWidgetRenderState(graphics, mouseX, mouseY, a);
+        super.render(graphics, mouseX, mouseY, delta);
 
-        Layout layout = this.layout;
-        int width = this.getWidth();
-        // draw right fade
-        if (this.scrollOffset < this.maxScrollOffset - NAVBAR_MARGIN) {
-            int right = width;
-            ColorGradientRenderState.createHorizontal(
-                    graphics,
-                    right - 40,
-                    layout.getY(),
-                    right,
-                    layout.getY() + layout.getHeight(),
-                    0x00000000, 0xFF000000
-            ).submit(graphics);
-
-            graphics.text(font, "→", right - 10, layout.getY() + (layout.getHeight() - font.lineHeight) / 2, 0xFFFFFFFF, false);
-        }
-
-        // draw left fade
-        if (this.scrollOffset > NAVBAR_MARGIN) {
-            ColorGradientRenderState.createHorizontal(
-                    graphics,
-                    0,
-                    layout.getY(),
-                    40,
-                    layout.getY() + layout.getHeight(),
-                    0xFF000000, 0x00000000
-            ).submit(graphics);
-
-            graphics.text(font, "←", 5, layout.getY() + (layout.getHeight() - font.lineHeight) / 2, 0xFFFFFFFF, false);
-        }
-
-        graphics.pose().popMatrix();
+        graphics.pose().popPose();
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
-        this.setScrollOffset(this.scrollOffset - (int) (vertical * 15) - (int) (horizontal * 15));
+    public boolean mouseScrolled(double mouseX, double mouseY, double vertical) {
+        this.setScrollOffset(this.scrollOffset - (int)(vertical*15));
         return true;
     }
 
@@ -134,7 +95,7 @@ public class ScrollableNavigationBar
     }
 
     public void setScrollOffset(int scrollOffset) {
-        Layout layout = this.layout;
+        Layout layout = ((TabNavigationBarAccessor) this).config$getLayout();
 
         layout.setX(layout.getX() + this.scrollOffset);
         this.scrollOffset = Mth.clamp(scrollOffset, 0, maxScrollOffset);
@@ -154,18 +115,10 @@ public class ScrollableNavigationBar
     }
 
     protected void ensureVisible(TabButton tabButton) {
-        int width = this.getWidth();
-
         if (tabButton.getX() < NAVBAR_MARGIN) {
             this.setScrollOffset(this.scrollOffset - (NAVBAR_MARGIN - tabButton.getX()));
-        } else if (tabButton.getX() + tabButton.getWidth() > width - NAVBAR_MARGIN) {
-            this.setScrollOffset(this.scrollOffset + (tabButton.getX() + tabButton.getWidth() - (width - NAVBAR_MARGIN)));
-        }
-    }
-
-    public void updateTabNames() {
-        for (TabButton tabButton : accessor.config$getTabButtons()) {
-            tabButton.setMessage(tabButton.tab().getTabTitle());
+        } else if (tabButton.getX() + tabButton.getWidth() > accessor.config$getWidth() - NAVBAR_MARGIN) {
+            this.setScrollOffset(this.scrollOffset + (tabButton.getX() + tabButton.getWidth() - (accessor.config$getWidth() - NAVBAR_MARGIN)));
         }
     }
 

@@ -1,6 +1,5 @@
 {
   "yacl.control.action.execute": "WYKONAJ",
-  "yacl.control.text.blank": "<puste>",
   "yacl.gui.save": "Zapisz zmiany",
   "yacl.gui.save.tooltip": "Sprawia, że wprowadzone zmiany są trwałe.",
   "yacl.gui.finished.tooltip": "Zamyka GUI.",
@@ -10,11 +9,6 @@
   "yacl.gui.undo.tooltip": "Przywraca wszystkie opcje do stanu sprzed edycji.",
   "yacl.gui.save_before_exit": "Zapisz przed wyjściem!",
   "yacl.gui.save_before_exit.tooltip": "Zapisz lub anuluj, aby wyjść z GUI.",
-  "yacl.list.move_up": "W górę",
-  "yacl.list.move_down": "W dół",
-  "yacl.list.remove": "Usuń",
-  "yacl.list.add_top": "Nowa pozycja",
-  "yacl.list.empty": "Lista jest pusta",
   "yacl.restart.title": "Konfiguracja wymaga restartu!",
   "yacl.restart.message": "Jedna lub więcej opcji wymaga ponownego uruchomienia gry, aby zastosować zmiany.",
   "yacl.restart.yes": "Zamknij Minecrafta",

@@ -1,14 +1,14 @@
 package id.patchedpixel.zoomify.config.lib.platform;
 
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 public final class ConfigPlatform {
-    public static Identifier mcRl(String path) {
+    public static ResourceLocation mcRl(String path) {
         return rl("minecraft", path);
     }
 
-    public static Identifier rl(String namespace, String path) {
-        return Identifier.fromNamespaceAndPath(namespace, path);
+    public static ResourceLocation rl(String namespace, String path) {
+        return new ResourceLocation(namespace, path);
     }
 
     private ConfigPlatform() {

@@ -5,9 +5,7 @@ import id.patchedpixel.zoomify.config.lib.api.Option;
 import id.patchedpixel.zoomify.config.lib.api.controller.IntegerSliderControllerBuilder;
 import id.patchedpixel.zoomify.config.lib.api.controller.ValueFormatter;
 import id.patchedpixel.zoomify.config.lib.gui.controllers.slider.IntegerSliderController;
-import net.minecraft.network.chat.Component;
 
-import java.util.function.Function;
 
 public class IntegerSliderControllerBuilderImpl extends AbstractControllerBuilderImpl<Integer> implements IntegerSliderControllerBuilder {
     private int min, max;

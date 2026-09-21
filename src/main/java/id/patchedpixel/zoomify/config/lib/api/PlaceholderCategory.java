@@ -39,7 +39,7 @@ public interface PlaceholderCategory extends ConfigCategory {
          * Can be invoked twice to append more lines.
          * No need to wrap the Component yourself, the gui does this itself.
          *
-         * @param tooltips Component lines - merged with a new-line on {@link Builder#build()}.
+         * @param tooltips Component lines - merged with a new-line on {@link id.patchedpixel.zoomify.config.lib.api.PlaceholderCategory.Builder#build()}.
          */
         Builder tooltip(@NotNull Component... tooltips);
 

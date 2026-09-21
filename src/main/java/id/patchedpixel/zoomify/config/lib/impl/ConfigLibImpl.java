@@ -2,8 +2,8 @@ package id.patchedpixel.zoomify.config.lib.impl;
 
 import com.google.common.collect.ImmutableList;
 import id.patchedpixel.zoomify.config.lib.api.ConfigCategory;
-import id.patchedpixel.zoomify.config.lib.api.PlaceholderCategory;
 import id.patchedpixel.zoomify.config.lib.api.ConfigLib;
+import id.patchedpixel.zoomify.config.lib.api.PlaceholderCategory;
 import id.patchedpixel.zoomify.config.lib.gui.ConfigScreen;
 import id.patchedpixel.zoomify.config.lib.impl.utils.ConfigConstants;
 import net.minecraft.client.gui.screens.Screen;
@@ -87,7 +87,7 @@ public final class ConfigLibImpl implements ConfigLib {
         }
 
         @Override
-        public Builder categories(@NotNull Collection<? extends @NotNull ConfigCategory> categories) {
+        public Builder categories(@NotNull Collection<? extends ConfigCategory> categories) {
             Validate.notNull(categories, "`categories` cannot be null");
 
             this.categories.addAll(categories);
