@@ -10,7 +10,7 @@ import org.spongepowered.asm.mixin.Mixin;
 
 @Mixin(Gui.class)
 public class GuiMixin {
-    // FIXME: When secondary zoom hud is still rendered not hided, but the settings is hud hide when secondary zoom.
+    // FIXME: Secondary zoom HUD hiding is currently not being applied.
     @WrapMethod(method = "render")
     private void preventHudRender(GuiGraphics guiGraphics, float partialTick, Operation<Void> original) {
         if (!Zoomify.INSTANCE.getSecondaryZooming() || !ZoomifySettings.Companion.getSecondaryHideHUDOnZoom().get()) {
