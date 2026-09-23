@@ -15,9 +15,7 @@ public class ControlifyIntegration implements ControlifyEntrypoint {
     private ControlifyIntegration() {}
 
     @Override
-    public void onControllersDiscovered(ControlifyApi controlify) {
-
-    }
+    public void onControllersDiscovered(ControlifyApi controlify) {}
 
     @Override
     public void onControlifyInit(InitContext context) {
