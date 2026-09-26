@@ -22,6 +22,13 @@ public abstract class ZoomDemoImageRenderer implements ImageRenderer {
         zoomControl.setup(this);
     }
 
+    public static void preloadAll() {
+        makeWebp(FirstPersonDemo.WORLD_TEXTURE);
+        makeWebp(FirstPersonDemo.HAND_TEXTURE);
+        makeWebp(ThirdPersonDemo.PLAYER_VIEW);
+        makeWebp(ThirdPersonDemo.HUD_TEXTURE);
+    }
+
     public ZoomHelper getZoomHelper() {
         return zoomHelper;
     }

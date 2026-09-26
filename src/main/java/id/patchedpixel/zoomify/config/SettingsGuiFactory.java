@@ -1,5 +1,6 @@
 package id.patchedpixel.zoomify.config;
 
+import id.patchedpixel.zoomify.Zoomify;
 import id.patchedpixel.zoomify.config.lib.api.*;
 import id.patchedpixel.zoomify.config.lib.api.controller.DoubleSliderControllerBuilder;
 import id.patchedpixel.zoomify.config.lib.api.controller.EnumControllerBuilder;
@@ -869,6 +870,33 @@ public final class SettingsGuiFactory {
                                 .build()
                 );
             }
+
+            misc.option(
+                    ButtonOption.createBuilder()
+                            .name(
+                                    Component.translatable(
+                                            "yacl3.config.zoomify.category.misc.root.option.unbindConflicting"
+                                    )
+                            )
+                            .description(
+                                    OptionDescription.createBuilder()
+                                            .text(
+                                                    Component.translatable(
+                                                            "yacl3.config.zoomify.category.misc.root.option.unbindConflicting.description.1"
+                                                    )
+                                            )
+                                            .build()
+                            )
+                            .text(
+                                    Component.translatable(
+                                            "yacl.control.action.execute"
+                                    )
+                            )
+                            .action((screen, option) -> {
+                                Zoomify.INSTANCE.unbindConflicting();
+                            })
+                            .build()
+            );
 
             misc.group(presetsGroup.build());
 

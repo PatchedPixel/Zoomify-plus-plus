@@ -4,12 +4,14 @@ import com.mojang.blaze3d.platform.InputConstants;
 import id.patchedpixel.zoomify.config.SettingsGuiFactory;
 import id.patchedpixel.zoomify.config.SpyglassBehaviour;
 import id.patchedpixel.zoomify.config.ZoomifySettings;
+import id.patchedpixel.zoomify.config.demo.ZoomDemoImageRenderer;
 import id.patchedpixel.zoomify.zoom.DefaultZoomHelpers;
 import id.patchedpixel.zoomify.zoom.ZoomHelper;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.player.AbstractClientPlayer;
 import net.minecraft.commands.Commands;
+import net.minecraft.network.chat.Component;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
@@ -26,8 +28,7 @@ import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import static id.patchedpixel.zoomify.utils.MinecraftExt.setScreen;
-import static id.patchedpixel.zoomify.utils.MinecraftExt.getScreen;
+import static id.patchedpixel.zoomify.utils.MinecraftExt.*;
 
 @OnlyIn(Dist.CLIENT)
 @Mod(Zoomify.MOD_ID)
@@ -264,5 +265,66 @@ public class Zoomify {
             case CARRYING -> zooming
                     && player.getInventory().hasAnyMatching((ItemStack stack) -> stack.is(Items.SPYGLASS));
         };
+    }
+
+    public void onGameFinishedLoading() {
+        ZoomDemoImageRenderer.preloadAll();
+
+        if(ZoomifySettings.Companion.isFirstLaunch()) {
+            LOGGER.info("Zoomfiy++ detected first launch!");
+            detectConflictingToast();
+        }
+    }
+
+    public boolean unbindConflicting() {
+        Minecraft minecraft = Minecraft.getInstance();
+
+        if (!zoomKey.isUnbound()) {
+            for (KeyMapping key : minecraft.options.keyMappings) {
+                if (key != zoomKey && key.equals(zoomKey)) {
+                    key.setKey(InputConstants.UNKNOWN);
+                    minecraft.options.save();
+
+                    toast(
+                            Component.translatable("zoomify.toast.unbindConflicting.name"),
+                            Component.translatable(
+                                    "zoomify.toast.unbindConflicting.description",
+                                    Component.translatable(key.getName())
+                            ),
+                            false
+                    );
+
+                    return true;
+                }
+            }
+        }
+
+        return false;
+    }
+
+    private void detectConflictingToast() {
+        Minecraft minecraft = Minecraft.getInstance();
+
+        if (zoomKey.isUnbound())
+            return;
+
+        boolean conflicting = false;
+        for (KeyMapping key : minecraft.options.keyMappings) {
+            if (key != zoomKey && key.equals(zoomKey)) {
+                conflicting = true;
+                break;
+            }
+        }
+
+        if (conflicting) {
+            toast(
+                    Component.translatable("zoomify.toast.conflictingKeybind.title"),
+                    Component.translatable(
+                            "zoomify.toast.conflictingKeybind.description",
+                            Component.translatable("yacl3.config.zoomify.category.misc")
+                    ),
+                    true
+            );
+        }
     }
 }

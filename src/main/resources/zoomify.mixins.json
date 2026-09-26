@@ -21,6 +21,6 @@
     "spyglass.GuiMixin",
     "zoom.GameRendererMixin",
     "zoom.MouseMixin",
-    "zoom.secondary.GuiMixin"
+    "zoom.secondary.GameRendererMixin"
   ]
 }

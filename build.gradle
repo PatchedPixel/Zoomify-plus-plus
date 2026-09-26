@@ -10,7 +10,7 @@ version = mod_version
 group = mod_group_id
 
 base {
-    archivesName = "${mod_id}-forge-${minecraft_version}"
+    archivesName = mod_id
 }
 
 java.toolchain.languageVersion = JavaLanguageVersion.of(17)
@@ -91,12 +91,12 @@ dependencies {
         jarJar.ranged(it, "[0.5.5,)")
     }
 
-    implementation(jarJar("com.twelvemonkeys.imageio:imageio-core:[3.12.0]"))
-    implementation(jarJar("com.twelvemonkeys.imageio:imageio-webp:[3.12.0]"))
-    implementation(jarJar("com.twelvemonkeys.imageio:imageio-metadata:[3.12.0]"))
-    implementation(jarJar("com.twelvemonkeys.common:common-lang:[3.12.0]"))
-    implementation(jarJar("com.twelvemonkeys.common:common-io:[3.12.0]"))
-    implementation(jarJar("com.twelvemonkeys.common:common-image:[3.12.0]"))
+    runtimeOnly(implementation(jarJar("com.twelvemonkeys.imageio:imageio-core:[3.12.0]")))
+    runtimeOnly(implementation(jarJar("com.twelvemonkeys.imageio:imageio-webp:[3.12.0]")))
+    runtimeOnly(implementation(jarJar("com.twelvemonkeys.imageio:imageio-metadata:[3.12.0]")))
+    runtimeOnly(implementation(jarJar("com.twelvemonkeys.common:common-lang:[3.12.0]")))
+    runtimeOnly(implementation(jarJar("com.twelvemonkeys.common:common-io:[3.12.0]")))
+    runtimeOnly(implementation(jarJar("com.twelvemonkeys.common:common-image:[3.12.0]")))
 }
 
 mixin {
