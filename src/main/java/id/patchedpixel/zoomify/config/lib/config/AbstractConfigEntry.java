@@ -1,4 +1,4 @@
-package id.patchedpixel.zoomify.config.lib.config.v3;
+package id.patchedpixel.zoomify.config.lib.config;
 
 import org.jetbrains.annotations.ApiStatus;
 

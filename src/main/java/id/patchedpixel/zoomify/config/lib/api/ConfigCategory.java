@@ -61,7 +61,7 @@ public interface ConfigCategory {
          * To add to another group, use {@link Builder#group(OptionGroup)}.
          * To construct an option, use {@link Option#createBuilder()}
          *
-         * @param optionSupplier to be called to initialise the option. called immediately
+         * @param optionSupplier to be called to initialise the option. Called immediately.
          * @return this
          */
         @Override
@@ -90,7 +90,7 @@ public interface ConfigCategory {
          * To construct an option, use {@link Option#createBuilder()}
          *
          * @param condition whether to add the option
-         * @param optionSupplier to be called to initialise the option. called immediately if and only if condition is true
+         * @param optionSupplier to be called to initialise the option. Called immediately if and only if condition is true.
          * @return this
          */
         @Override
@@ -104,11 +104,28 @@ public interface ConfigCategory {
          * To add to another group, use {@link Builder#groups(Collection)}.
          * To construct an option, use {@link Option#createBuilder()}
          *
+         * @param options the options to add
          * @see ConfigCategory#groups()
          * @see OptionGroup#isRoot()
          */
         @Override
         Builder options(@NotNull Collection<? extends Option<?>> options);
+
+        /**
+         * Adds multiple options to the root group of the category if a condition is met.
+         * To add to another group, use {@link Builder#groups(Collection)}.
+         * To construct an option, use {@link Option#createBuilder()}
+         *
+         * @param condition whether to add the options
+         * @param options the options to add
+         * @see ConfigCategory#groups()
+         * @see OptionGroup#isRoot()
+         */
+        @Override
+        default Builder optionsIf(boolean condition, @NotNull Collection<? extends Option<?>> options) {
+            OptionAddable.super.optionsIf(condition, options);
+            return this;
+        }
 
         /**
          * Adds an option group.
@@ -122,7 +139,7 @@ public interface ConfigCategory {
          * To add an option to the root group, use {@link Builder#option(Option)}
          * To construct a group, use {@link OptionGroup#createBuilder()}
          *
-         * @param groupSupplier to be called to initialise the group. called immediately
+         * @param groupSupplier to be called to initialise the group. Called immediately.
          */
         default Builder group(@NotNull Supplier<@NotNull OptionGroup> groupSupplier) {
             return group(groupSupplier.get());
@@ -145,7 +162,7 @@ public interface ConfigCategory {
          * To construct a group, use {@link OptionGroup#createBuilder()}
          *
          * @param condition whether to add the group
-         * @param groupSupplier to be called to initialise the group. called immediately if and only if condition is true
+         * @param groupSupplier to be called to initialise the group. Called immediately if and only if condition is true.
          */
         default Builder groupIf(boolean condition, @NotNull Supplier<@NotNull OptionGroup> groupSupplier) {
             return condition ? group(groupSupplier) : this;
@@ -155,8 +172,22 @@ public interface ConfigCategory {
          * Adds multiple option groups.
          * To add multiple options to the root group, use {@link Builder#options(Collection)}
          * To construct a group, use {@link OptionGroup#createBuilder()}
+         *
+         * @param groups the groups to add
          */
         Builder groups(@NotNull Collection<OptionGroup> groups);
+
+        /**
+         * Adds multiple option groups if a condition is met.
+         * To add multiple options to the root group, use {@link Builder#optionsIf(boolean, Collection)}
+         * To construct a group, use {@link OptionGroup#createBuilder()}
+         *
+         * @param condition whether to add the groups
+         * @param groups the groups to add
+         */
+        default Builder groupsIf(boolean condition, @NotNull Collection<OptionGroup> groups) {
+            return condition ? groups(groups) : this;
+        }
 
         /**
          * Fetches the builder for the root group of the category.

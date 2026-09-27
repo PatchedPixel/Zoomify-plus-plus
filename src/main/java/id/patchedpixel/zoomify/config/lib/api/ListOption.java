@@ -161,23 +161,23 @@ public interface ListOption<T> extends OptionGroup, Option<List<T>> {
          */
         Builder<T> collapsed(boolean collapsible);
 
-        ListOption.Builder<T> addListener(@NotNull OptionEventListener<List<T>> listener);
+        Builder<T> addListener(@NotNull OptionEventListener<List<T>> listener);
 
-        ListOption.Builder<T> addListeners(@NotNull Collection<OptionEventListener<List<T>>> listeners);
+        Builder<T> addListeners(@NotNull Collection<OptionEventListener<List<T>>> listeners);
 
         /**
          * Adds a listener to the option. Invoked upon changing any of the list's entries.
          *
          * @see Option#addListener(BiConsumer)
          */
-        ListOption.Builder<T> listener(@NotNull BiConsumer<Option<List<T>>, List<T>> listener);
+        Builder<T> listener(@NotNull BiConsumer<Option<List<T>>, List<T>> listener);
 
         /**
          * Adds multiple listeners to the option. Invoked upon changing of any of the list's entries.
          *
          * @see Option#addListener(BiConsumer)
          */
-        ListOption.Builder<T> listeners(@NotNull Collection<BiConsumer<Option<List<T>>, List<T>>> listeners);
+        Builder<T> listeners(@NotNull Collection<BiConsumer<Option<List<T>>, List<T>>> listeners);
 
         ListOption<T> build();
     }

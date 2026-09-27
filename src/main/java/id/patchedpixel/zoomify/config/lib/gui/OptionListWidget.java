@@ -1,37 +1,45 @@
 package id.patchedpixel.zoomify.config.lib.gui;
 
 import com.google.common.collect.ImmutableList;
+import com.mojang.blaze3d.platform.InputConstants;
 import id.patchedpixel.zoomify.config.lib.api.*;
 import id.patchedpixel.zoomify.config.lib.api.utils.Dimension;
 import id.patchedpixel.zoomify.config.lib.impl.utils.ConfigConstants;
+import id.patchedpixel.zoomify.mixins.AbstractSelectionListAccessor;
 import net.minecraft.ChatFormatting;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.MultiLineLabel;
 import net.minecraft.client.gui.components.events.GuiEventListener;
 import net.minecraft.client.gui.narration.NarratableEntry;
 import net.minecraft.client.gui.narration.NarratedElementType;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
+import net.minecraft.client.gui.navigation.ScreenDirection;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.gui.TextAlignment;
+import net.minecraft.client.input.CharacterEvent;
+import net.minecraft.client.input.KeyEvent;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jspecify.annotations.NonNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 import java.util.function.Consumer;
+import java.util.function.Predicate;
 
-public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entry> {
+public class OptionListWidget extends ConfigSelectionList<OptionListWidget.Entry> {
     private final ConfigScreen configScreen;
     private final ConfigCategory category;
-    private ImmutableList<Entry> viewableChildren;
     private String searchQuery = "";
     private final Consumer<DescriptionWithName> hoverEvent;
     private DescriptionWithName lastHoveredOption;
 
     public OptionListWidget(ConfigScreen screen, ConfigCategory category, Minecraft client, int x, int y, int width, int height, Consumer<DescriptionWithName> hoverEvent) {
-        super(client, x, y, width, height, true);
+        super(client, width, height, y);
         this.configScreen = screen;
         this.category = category;
         this.hoverEvent = hoverEvent;
@@ -81,14 +89,19 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
             }
         }
 
-        recacheViewableChildren();
         setScrollAmount(0);
-        resetSmoothScrolling();
+        repositionEntries();
+    }
+
+    @Override
+    protected int addEntry(Entry entry) {
+        // instead of using super.defaultEntryHeight, use the height the entry wants to be - our entries set their height in the constructor
+        return this.addEntry(entry, entry.getHeight());
     }
 
     private void refreshListEntries(ListOption<?> listOption, ConfigCategory category) {
         // find group separator for group
-        ListGroupSeparatorEntry groupSeparator = super.children().stream().filter(e -> e instanceof ListGroupSeparatorEntry gs && gs.group == listOption).map(ListGroupSeparatorEntry.class::cast).findAny().orElse(null);
+        ListGroupSeparatorEntry groupSeparator = this.children().stream().filter(e -> e instanceof ListGroupSeparatorEntry gs && gs.group == listOption).map(ListGroupSeparatorEntry.class::cast).findAny().orElse(null);
 
         if (groupSeparator == null) {
             ConfigConstants.LOGGER.warn("Can't find group seperator to refresh list option entries for list option " + listOption.name());
@@ -96,7 +109,7 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
         }
 
         for (Entry entry : groupSeparator.childEntries)
-            super.removeEntry(entry);
+            this.removeEntry(entry);
         groupSeparator.childEntries.clear();
 
         // if no entries, below loop won't run where addEntryBelow() recaches viewable children
@@ -140,26 +153,29 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
 
     public void updateSearchQuery(String query) {
         this.searchQuery = query;
+        for (Entry entry : this.children()) {
+            entry.updateSearchQuery(query);
+        }
         expandAllGroups();
-        recacheViewableChildren();
+        repositionEntries();
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
+    public boolean mouseClicked(MouseButtonEvent event, boolean bl) {
         for (Entry child : children()) {
-            if (child != getEntryAtPosition(mouseX, mouseY) && child instanceof OptionEntry optionEntry)
+            if (child != getEntryAtPosition(event.x(), event.y()) && child instanceof OptionEntry optionEntry)
                 optionEntry.widget.unfocus();
         }
 
-        return super.mouseClicked(mouseX, mouseY, button);
+        return super.mouseClicked(event, bl);
     }
 
     @Override
-    public boolean mouseScrolled(double mouseX, double mouseY, double vertical) {
-        super.mouseScrolled(mouseX, mouseY, vertical);
+    public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+        super.mouseScrolled(mouseX, mouseY, horizontal, vertical);
 
         for (Entry child : children()) {
-            if (child.mouseScrolled(mouseX, mouseY, vertical))
+            if (child.mouseScrolled(mouseX, mouseY, horizontal, vertical))
                 break;
         }
 
@@ -167,82 +183,57 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
-        if (this.getFocused() != null && this.isDragging() && isValidMouseClick(button)) {
-            return this.getFocused().mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+    public boolean mouseDragged(MouseButtonEvent event, double deltaX, double deltaY) {
+        if (this.getFocused() != null && this.isDragging() && isValidMouseClick(event.button())) {
+            GuiEventListener l = this.getFocused();
+            return l.mouseDragged(event, deltaX, deltaY);
         }
-        return super.mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+        return super.mouseDragged(event, deltaX, deltaY);
     }
 
     @Override
-    public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
+    public boolean keyPressed(KeyEvent keyEvent) {
         for (Entry child : children()) {
-            if (child.keyPressed(keyCode, scanCode, modifiers))
+            if (child.keyPressed(keyEvent))
                 return true;
         }
 
-        return super.keyPressed(keyCode, scanCode, modifiers);
+        return super.keyPressed(keyEvent);
     }
 
     @Override
-    public boolean charTyped(char chr, int modifiers) {
+    public boolean charTyped(CharacterEvent characterEvent) {
         for (Entry child : children()) {
-            if (child.charTyped(chr, modifiers))
+            if (child.charTyped(characterEvent))
                 return true;
         }
 
-        return super.charTyped(chr, modifiers);
+        return super.charTyped(characterEvent);
     }
 
-    public void recacheViewableChildren() {
-        this.viewableChildren = ImmutableList.copyOf(super.children().stream().filter(Entry::isViewable).toList());
-
-        // update y positions before they need to be rendered are rendered
-        int i = 0;
-        for (Entry entry : viewableChildren) {
-            if (entry instanceof OptionEntry optionEntry)
-                optionEntry.widget.setDimension(optionEntry.widget.getDimension().withY(getRowTop(i)));
-            i++;
-        }
+    private List<Entry> superModifiableChildren() {
+        // noinspection unchecked
+        return (List<Entry>) ((AbstractSelectionListAccessor) this).getChildren();
     }
 
-    @Override
-    public List<Entry> children() {
-        return viewableChildren;
-    }
-
-    public void addEntry(int index, Entry entry) {
-        super.children().add(index, entry);
-        recacheViewableChildren();
+    public void addEntryAtIndex(int index, Entry entry) {
+        superModifiableChildren().add(index, entry);
+        this.repositionEntries();
     }
 
     public void addEntryBelow(Entry below, Entry entry) {
-        int idx = super.children().indexOf(below) + 1;
+        int idx = superModifiableChildren().indexOf(below) + 1;
 
         if (idx == 0)
             throw new IllegalStateException("The entry to insert below does not exist!");
 
-        addEntry(idx, entry);
+        addEntryAtIndex(idx, entry);
     }
 
     public void addEntryBelowWithoutScroll(Entry below, Entry entry) {
         double d = (double)this.contentHeight() - this.scrollAmount();
         addEntryBelow(below, entry);
         setScrollAmount(this.contentHeight() - d);
-    }
-
-    @Override
-    public boolean removeEntryFromTop(Entry entry) {
-        boolean ret = super.removeEntryFromTop(entry);
-        recacheViewableChildren();
-        return ret;
-    }
-
-    @Override
-    public boolean removeEntry(Entry entry) {
-        boolean ret = super.removeEntry(entry);
-        recacheViewableChildren();
-        return ret;
     }
 
     private void setHoverDescription(DescriptionWithName description) {
@@ -252,14 +243,61 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
         }
     }
 
+    @Override
+    protected void extractListBackground(@NonNull GuiGraphicsExtractor graphics) {
+    }
 
-    public abstract class Entry extends ElementListWidgetExt.Entry<Entry> {
-        public boolean isViewable() {
-            return true;
+    protected boolean isValidMouseClick(int button) {
+        return button == InputConstants.MOUSE_BUTTON_LEFT || button == InputConstants.MOUSE_BUTTON_RIGHT || button == InputConstants.MOUSE_BUTTON_MIDDLE;
+    }
+
+    @Override
+    protected Entry nextEntry(@NotNull ScreenDirection direction, @NotNull Predicate<Entry> predicate, Entry selected) {
+        // ensure we don't focus unviewable entries
+        return super.nextEntry(direction, entry -> entry.isViewable() && predicate.test(entry), selected);
+    }
+
+    public abstract class Entry extends ConfigSelectionList.Entry<Entry> {
+        protected boolean searchQueryMatches = true;
+
+        public Entry() {
+            super(OptionListWidget.this);
         }
 
-        protected boolean isHovered() {
-            return Objects.equals(getHovered(), this);
+        public boolean updateSearchQuery(String searchQuery) {
+            boolean matches = searchQuery.isEmpty();
+            if (this.searchQueryMatches != matches) {
+                this.searchQueryMatches = matches;
+                refreshVisibilityState();
+            }
+            return this.searchQueryMatches;
+        }
+
+        public boolean isViewable() {
+            return this.searchQueryMatches;
+        }
+
+        @Override
+        public int getHeight() {
+            if (!isViewable()) {
+                return 0;
+            }
+            return super.getHeight();
+        }
+
+        protected void refreshVisibilityState() {
+            if (isViewable()) {
+                onBecameViewable();
+            } else {
+                onBecameHidden();
+            }
+        }
+
+        protected void onBecameViewable() {
+        }
+
+        protected void onBecameHidden() {
+            this.setHeight(0);
         }
     }
 
@@ -272,7 +310,7 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
 
         public final AbstractWidget widget;
 
-        private final TextScaledButtonWidget resetButton;
+        private final TooltipButtonWidget resetButton;
 
         private final String categoryName;
         private final String groupName;
@@ -287,7 +325,7 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
             this.groupName = group.name().getString().toLowerCase();
             if (option.canResetToDefault() && this.widget.canReset()) {
                 this.widget.setDimension(this.widget.getDimension().expanded(-20, 0));
-                this.resetButton = new TextScaledButtonWidget(configScreen, widget.getDimension().xLimit(), -50, 20, 20, 2f, Component.literal("\u21BB"), button -> {
+                this.resetButton = new TooltipButtonWidget(configScreen, widget.getDimension().xLimit(), -50, 20, 20, Component.literal("\u27F2"), null, button -> {
                     option.requestSetDefault();
                 });
                 option.addListener((opt, val) -> this.resetButton.active = !opt.isPendingValueDefault() && opt.available());
@@ -295,50 +333,69 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
             } else {
                 this.resetButton = null;
             }
+            this.updateHeight();
         }
 
         @Override
-        public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            widget.setDimension(widget.getDimension().withY(y));
-
-            widget.render(graphics, mouseX, mouseY, tickDelta);
-
-            if (resetButton != null) {
-                resetButton.setY(y);
-                resetButton.render(graphics, mouseX, mouseY, tickDelta);
+        public void extractContent(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
+            if (!this.isViewable()) {
+                return;
             }
 
-            if (isHovered()) {
+            this.updateHeight();
+
+            widget.setDimension(widget.getDimension().withY(this.getY()));
+
+            widget.extractRenderState(graphics, mouseX, mouseY, a);
+
+            if (resetButton != null) {
+                resetButton.setY(this.getY());
+                resetButton.extractRenderState(graphics, mouseX, mouseY, a);
+            }
+
+            if (isMouseOver(mouseX, mouseY)) {
                 setHoverDescription(DescriptionWithName.of(option.name(), option.description()));
             }
         }
 
         @Override
-        public boolean mouseScrolled(double mouseX, double mouseY, double vertical) {
-            return widget.mouseScrolled(mouseX, mouseY, vertical);
+        public boolean mouseScrolled(double mouseX, double mouseY, double horizontal, double vertical) {
+            return widget.mouseScrolled(mouseX, mouseY, horizontal, vertical);
         }
 
         @Override
-        public boolean keyPressed(int keyCode, int scanCode, int modifiers) {
-            return widget.keyPressed(keyCode, scanCode, modifiers);
+        public boolean keyPressed(@NonNull KeyEvent event) {
+            return widget.keyPressed(event);
         }
 
         @Override
-        public boolean charTyped(char chr, int modifiers) {
-            return widget.charTyped(chr, modifiers);
+        public boolean charTyped(@NonNull CharacterEvent event) {
+            return widget.charTyped(event);
+        }
+
+        @Override
+        public boolean updateSearchQuery(String searchQuery) {
+            this.searchQueryMatches = searchQuery.isEmpty()
+                    || groupName.contains(searchQuery)
+                    || widget.matchesSearch(searchQuery);
+            refreshVisibilityState();
+            return this.searchQueryMatches;
         }
 
         @Override
         public boolean isViewable() {
-            return (groupSeparatorEntry == null || groupSeparatorEntry.isExpanded())
-                    && (searchQuery.isEmpty()
-                    || groupName.contains(searchQuery)
-                    || widget.matchesSearch(searchQuery));
+            return super.isViewable()
+                    && (groupSeparatorEntry == null || groupSeparatorEntry.isExpanded());
         }
 
         @Override
-        public int getItemHeight() {
-            return Math.max(widget.getDimension().height(), resetButton != null ? resetButton.getHeight() : 0) + 2;
+        protected void onBecameViewable() {
+            super.onBecameViewable();
+            updateHeight();
+        }
+
+        private void updateHeight() {
+            this.setHeight(Math.max(widget.getDimension().height(), resetButton != null ? resetButton.getHeight() : 0) + 2);
         }
 
         @Override
@@ -379,8 +436,6 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
 
         protected List<Entry> childEntries = new ArrayList<>();
 
-        private int y;
-
         private GroupSeparatorEntry(OptionGroup group, Screen screen) {
             this.group = group;
             this.screen = screen;
@@ -389,21 +444,26 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
             this.groupExpanded = !group.collapsed();
             this.expandMinimizeButton = new LowProfileButtonWidget(0, 0, 20, 20, Component.empty(), btn -> onExpandButtonPress());
             updateExpandMinimizeText();
+            updateHeight();
         }
 
         @Override
-        public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            this.y = y;
+        public void extractContent(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
+            if (!this.isViewable()) {
+                return;
+            }
 
-            int buttonY = y + entryHeight / 2 - expandMinimizeButton.getHeight() / 2 + 1;
+            this.updateHeight();
+
+            int buttonY = this.getY() + this.getHeight() / 2 - expandMinimizeButton.getHeight() / 2 + 1;
 
             expandMinimizeButton.setY(buttonY);
-            expandMinimizeButton.setX(x);
-            expandMinimizeButton.render(graphics, mouseX, mouseY, tickDelta);
+            expandMinimizeButton.setX(this.getX());
+            expandMinimizeButton.extractRenderState(graphics, mouseX, mouseY, a);
 
-            wrappedName.renderCentered(graphics, x + entryWidth / 2, y + getYPadding());
+            wrappedName.visitLines(TextAlignment.CENTER, this.getX() + this.getWidth() / 2, this.getY() + getYPadding(), font.lineHeight, graphics.textRenderer());
 
-            if (isHovered()) {
+            if (isMouseOver(mouseX, mouseY)) {
                 setHoverDescription(DescriptionWithName.of(group.name(), group.description()));
             }
         }
@@ -418,7 +478,8 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
 
             this.groupExpanded = expanded;
             updateExpandMinimizeText();
-            recacheViewableChildren();
+            childEntries.forEach(Entry::refreshVisibilityState);
+            repositionEntries();
         }
 
         protected void onExpandButtonPress() {
@@ -435,13 +496,8 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
         }
 
         @Override
-        public boolean isViewable() {
-            return searchQuery.isEmpty() || childEntries.stream().anyMatch(Entry::isViewable);
-        }
-
-        @Override
-        public int getItemHeight() {
-            return Math.max(wrappedName.getLineCount(), 1) * font.lineHeight + getYPadding() * 2;
+        public boolean updateSearchQuery(String searchQuery) {
+            return this.searchQueryMatches = searchQuery.isEmpty() || childEntries.stream().anyMatch(e -> e.updateSearchQuery(searchQuery));
         }
 
         private int getYPadding() {
@@ -455,11 +511,15 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
                 setHoverDescription(DescriptionWithName.of(group.name(), group.description()));
         }
 
+        private void updateHeight() {
+            this.setHeight(Math.max(wrappedName.getLineCount(), 1) * font.lineHeight + getYPadding() * 2);
+        }
+
         @Override
-        public List<? extends NarratableEntry> narratables() {
+        public @NotNull List<? extends NarratableEntry> narratables() {
             return ImmutableList.of(new NarratableEntry() {
                 @Override
-                public NarrationPriority narrationPriority() {
+                public @NotNull NarrationPriority narrationPriority() {
                     return NarrationPriority.HOVERED;
                 }
 
@@ -472,21 +532,21 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
         }
 
         @Override
-        public List<? extends GuiEventListener> children() {
+        public @NotNull List<? extends GuiEventListener> children() {
             return ImmutableList.of(expandMinimizeButton);
         }
     }
 
     public class ListGroupSeparatorEntry extends GroupSeparatorEntry {
         private final ListOption<?> listOption;
-        private final TextScaledButtonWidget resetListButton;
+        private final TooltipButtonWidget resetListButton;
         private final TooltipButtonWidget addListButton;
 
         private ListGroupSeparatorEntry(ListOption<?> group, Screen screen) {
             super(group, screen);
             this.listOption = group;
 
-            this.resetListButton = new TextScaledButtonWidget(screen, getRowRight() - 20, -50, 20, 20, 2f, Component.literal("\u21BB"), button -> {
+            this.resetListButton = new TooltipButtonWidget(screen, getRowRight() - 20, -50, 20, 20, Component.literal("\u27F2"), null, button -> {
                 group.requestSetDefault();
             });
             group.addListener((opt, val) -> this.resetListButton.active = !opt.isPendingValueDefault() && opt.available());
@@ -503,18 +563,22 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
         }
 
         @Override
-        public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
+        public void extractContent(@NonNull GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
+            if (!this.isViewable()) {
+                return;
+            }
+
             updateExpandMinimizeText(); // update every render because option could become available/unavailable at any time
 
-            super.render(graphics, index, y, x, entryWidth, entryHeight, mouseX, mouseY, hovered, tickDelta);
+            super.extractContent(graphics, mouseX, mouseY, hovered, a);
 
             int buttonY = expandMinimizeButton.getY();
 
             resetListButton.setY(buttonY);
             addListButton.setY(buttonY);
 
-            resetListButton.render(graphics, mouseX, mouseY, tickDelta);
-            addListButton.render(graphics, mouseX, mouseY, tickDelta);
+            resetListButton.extractRenderState(graphics, mouseX, mouseY, a);
+            addListButton.extractRenderState(graphics, mouseX, mouseY, a);
         }
 
         private void minimizeIfUnavailable() {
@@ -537,7 +601,7 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
         }
 
         @Override
-        public List<? extends GuiEventListener> children() {
+        public @NotNull List<? extends GuiEventListener> children() {
             return ImmutableList.of(expandMinimizeButton, addListButton, resetListButton);
         }
     }
@@ -551,21 +615,38 @@ public class OptionListWidget extends ElementListWidgetExt<OptionListWidget.Entr
             this.parent = parent;
             this.groupName = parent.group.name().getString().toLowerCase();
             this.categoryName = category.name().getString().toLowerCase();
+            this.setHeight(11);
         }
 
         @Override
-        public void render(GuiGraphics graphics, int index, int y, int x, int entryWidth, int entryHeight, int mouseX, int mouseY, boolean hovered, float tickDelta) {
-            graphics.drawCenteredString(Minecraft.getInstance().font, Component.translatable("yacl.list.empty").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC), x + entryWidth / 2, y, -1);
+        public void extractContent(GuiGraphicsExtractor graphics, int mouseX, int mouseY, boolean hovered, float a) {
+            if (!this.isViewable()) {
+                return;
+            }
+
+            graphics.centeredText(Minecraft.getInstance().font, Component.translatable("yacl.list.empty").withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.ITALIC), this.getX() + this.getWidth() / 2, this.getY(), -1);
+        }
+
+        @Override
+        public boolean updateSearchQuery(String searchQuery) {
+            return this.searchQueryMatches = searchQuery.isEmpty() || groupName.contains(searchQuery);
         }
 
         @Override
         public boolean isViewable() {
-            return parent.isExpanded() && (searchQuery.isEmpty() || groupName.contains(searchQuery));
+            return parent.isExpanded() && super.isViewable();
         }
 
         @Override
-        public int getItemHeight() {
-            return 11;
+        protected void onBecameViewable() {
+            super.onBecameViewable();
+            setHeight(11);
+        }
+
+        @Override
+        protected void onBecameHidden() {
+            super.onBecameHidden();
+            setHeight(0);
         }
 
         @Override

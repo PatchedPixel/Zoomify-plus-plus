@@ -7,30 +7,37 @@ import id.patchedpixel.zoomify.config.lib.api.utils.MutableDimension;
 import id.patchedpixel.zoomify.config.lib.api.utils.OptionUtils;
 import id.patchedpixel.zoomify.config.lib.gui.controllers.PopupControllerScreen;
 import id.patchedpixel.zoomify.config.lib.gui.controllers.ControllerPopupWidget;
-import id.patchedpixel.zoomify.config.lib.gui.tab.ListHolderWidget;
 import id.patchedpixel.zoomify.config.lib.gui.tab.ScrollableNavigationBar;
 import id.patchedpixel.zoomify.config.lib.gui.tab.TabExt;
 import id.patchedpixel.zoomify.config.lib.gui.utils.GuiUtils;
 import id.patchedpixel.zoomify.config.lib.impl.utils.ConfigConstants;
+import id.patchedpixel.zoomify.config.lib.platform.ConfigPlatform;
 import net.minecraft.ChatFormatting;
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.Font;
-import net.minecraft.client.gui.GuiGraphics;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.AbstractWidget;
 import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.MultiLineLabel;
 import net.minecraft.client.gui.components.Tooltip;
+import net.minecraft.client.gui.components.events.GuiEventListener;
+import net.minecraft.client.gui.components.tabs.Tab;
 import net.minecraft.client.gui.components.tabs.TabManager;
 import net.minecraft.client.gui.navigation.ScreenRectangle;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.client.gui.screens.inventory.tooltip.TooltipRenderUtil;
+import net.minecraft.client.gui.screens.worldselection.CreateWorldScreen;
+import net.minecraft.client.renderer.RenderPipelines;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Consumer;
+
+import net.minecraft.client.input.MouseButtonEvent;
 
 public class ConfigScreen extends Screen {
     public final ConfigLib config;
@@ -50,13 +57,20 @@ public class ConfigScreen extends Screen {
     public ControllerPopupWidget<?> currentPopupController = null;
     public boolean popupControllerVisible = false;
 
+    /**
+     * The tab where the user started searching
+     */
+    private @Nullable CategoryTab preferredTab = null;
+
     public ConfigScreen(ConfigLib config, Screen parent) {
         super(config.title());
         this.config = config;
         this.parent = parent;
 
         OptionUtils.forEachOptions(config, option -> {
-            option.addListener((opt, val) -> onOptionChanged(opt));
+            option.addEventListener((opt, event) -> {
+                if (event != OptionEventListener.Event.INITIAL) onOptionChanged(opt);
+            });
         });
     }
 
@@ -81,7 +95,7 @@ public class ConfigScreen extends Screen {
                     return new CategoryTab(this, category, tabArea);
                 }).toList());
         tabNavigationBar.selectTab(currentTab, false);
-        tabNavigationBar.arrangeElements();
+        tabNavigationBar.arrangeElements(tabArea.width());
         tabManager.setTabArea(tabArea);
         addRenderableWidget(tabNavigationBar);
 
@@ -100,15 +114,15 @@ public class ConfigScreen extends Screen {
 
         OptionListWidget optionListWidget = null;
         if(this.tabNavigationBar.getTabManager().getCurrentTab() instanceof CategoryTab categoryTab) {
-            optionListWidget = categoryTab.optionList.getList();
+            optionListWidget = categoryTab.optionList.getType();
         }
         if(optionListWidget != null) {
-            this.minecraft.setScreen(new PopupControllerScreen(this, controllerPopupWidget));
+            GuiUtils.setScreen(new PopupControllerScreen(this, controllerPopupWidget));
         }
     }
 
     public void clearPopupControllerWidget() {
-        if(Minecraft.getInstance().screen instanceof PopupControllerScreen popupControllerScreen) {
+        if (GuiUtils.getCurrentScreen() instanceof PopupControllerScreen popupControllerScreen) {
             popupControllerScreen.onClose();
         }
         popupControllerVisible = false;
@@ -116,14 +130,8 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public void render(GuiGraphics graphics, int mouseX, int mouseY, float delta) {
-        renderDirtBackground(graphics);
-        super.render(graphics, mouseX, mouseY, delta);
-    }
-
-    @Override
-    public void renderBackground(GuiGraphics guiGraphics) {
-        super.renderBackground(guiGraphics);
+    public void extractBackground(GuiGraphicsExtractor guiGraphics, int mouseX, int mouseY, float partialTick) {
+        super.extractBackground(guiGraphics, mouseX, mouseY, partialTick);
 
         if (tabManager.getCurrentTab() instanceof TabExt tab) {
             tab.renderBackground(guiGraphics);
@@ -196,8 +204,8 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public boolean mouseClicked(double mouseX, double mouseY, int button) {
-        if (super.mouseClicked(mouseX, mouseY, button)) {
+    public boolean mouseClicked(MouseButtonEvent mouseButtonEvent, boolean bl) {
+        if (super.mouseClicked(mouseButtonEvent, bl)) {
             this.setDragging(true);
             return true;
         }
@@ -205,11 +213,11 @@ public class ConfigScreen extends Screen {
     }
 
     @Override
-    public boolean mouseDragged(double mouseX, double mouseY, int button, double deltaX, double deltaY) {
+    public boolean mouseDragged(MouseButtonEvent mouseButtonEvent, double d, double e) {
         return this.getFocused() != null
                 && this.isDragging()
-                && (button == InputConstants.MOUSE_BUTTON_LEFT || button == InputConstants.MOUSE_BUTTON_RIGHT)
-                && this.getFocused().mouseDragged(mouseX, mouseY, button, deltaX, deltaY);
+                && (mouseButtonEvent.button() == InputConstants.MOUSE_BUTTON_LEFT || mouseButtonEvent.button() == InputConstants.MOUSE_BUTTON_RIGHT)
+                && this.getFocused().mouseDragged(mouseButtonEvent, d, e);
     }
 
     public void setSaveButtonMessage(Component message, Component tooltip) {
@@ -246,10 +254,10 @@ public class ConfigScreen extends Screen {
 
     @Override
     public void onClose() {
-        minecraft.setScreen(parent);
+        GuiUtils.setScreen(parent);
     }
 
-    public static void renderMultilineTooltip(GuiGraphics graphics, Font font, MultiLineLabel text, int centerX, int yAbove, int yBelow, int screenWidth, int screenHeight) {
+    public static void renderMultilineTooltip(GuiGraphicsExtractor graphics, Font font, MultiLineLabel text, int centerX, int yAbove, int yBelow, int screenWidth, int screenHeight) {
         if (text.getLineCount() > 0) {
             int maxWidth = text.getWidth();
             int lineHeight = font.lineHeight + 1;
@@ -268,30 +276,67 @@ public class ConfigScreen extends Screen {
             int drawX = x + 12;
             int drawY = y - 12;
 
-            graphics.pose().pushPose();
-            TooltipRenderUtil.renderTooltipBackground(
+            graphics.pose().pushMatrix();
+            TooltipRenderUtil.extractTooltipBackground(
                     graphics,
                     drawX,
                     drawY,
                     maxWidth,
-                    height,
-                    400
+                    height
+                    ,null
             );
-            graphics.pose().translate(0.0, 0.0, 400.0);
 
-            text.renderLeftAligned(graphics, drawX, drawY, lineHeight, -1);
+            text.visitLines(net.minecraft.client.gui.TextAlignment.LEFT, drawX, drawY, lineHeight, graphics.textRenderer());
 
-            graphics.pose().popPose();
+            graphics.pose().popMatrix();
         }
     }
 
+    public void updateGlobalSearch(String search) {
+        Tab nextTabWithSearch = null;
+        if (preferredTab != null) {
+            preferredTab.optionList.getType().updateSearchQuery(search);
+            if (preferredTab.hasSearch()) nextTabWithSearch = preferredTab;
+        }
+        Tab currentTab = tabNavigationBar.getTabManager().getCurrentTab();
+        int cursorPos = currentTab instanceof CategoryTab categoryTab ? categoryTab.searchField.getCursorPosition() : -1;
+
+        for (int i = 0; i < tabNavigationBar.getTabs().size(); i++) {
+            Tab tab = tabNavigationBar.getTabs().get(i);
+            if (tab == preferredTab) continue;
+            if (tab instanceof CategoryTab categoryTab) {
+                categoryTab.optionList.getType().updateSearchQuery(search);
+                categoryTab.searchField.setValueDoNotUpdate(search);
+                if (cursorPos != -1) categoryTab.searchField.setCursorPosition(cursorPos);
+                if (nextTabWithSearch == null && categoryTab.hasSearch()) {
+                    nextTabWithSearch = categoryTab;
+                }
+            }
+        }
+        // switch if the next tab is the preferred one or switch if the current tab does not have the search
+        if (nextTabWithSearch != null && nextTabWithSearch != currentTab && (nextTabWithSearch == preferredTab || !(currentTab instanceof CategoryTab categoryTab && categoryTab.hasSearch()))) {
+            tabManager.setCurrentTab(nextTabWithSearch, false);
+            if (nextTabWithSearch instanceof CategoryTab newTab) {
+                setFocused(newTab.searchField);
+            }
+        }
+        tabNavigationBar.updateTabNames();
+    }
+
+    @Override
+    public void setFocused(@Nullable GuiEventListener focused) {
+        super.setFocused(focused);
+        if (focused != null && !(focused instanceof SearchFieldWidget)) preferredTab = null;
+    }
+
     public static class CategoryTab implements TabExt {
+        private static final Identifier DARKER_BG = ConfigPlatform.mcRl("textures/gui/menu_list_background.png");
 
         private final ConfigScreen screen;
         private final ConfigCategory category;
         private final Tooltip tooltip;
 
-        private ListHolderWidget<OptionListWidget> optionList;
+        private WidgetAndType<OptionListWidget> optionList;
         public final Button saveFinishedButton;
         public final Button cancelResetButton;
         public final Button undoButton;
@@ -330,7 +375,7 @@ public class ConfigScreen extends Screen {
                     .tooltip(Tooltip.create(Component.translatable("yacl.gui.undo.tooltip")))
                     .build();
 
-            searchField = new SearchFieldWidget(
+            this.searchField = new SearchFieldWidget(
                     screen,
                     screen.font,
                     screen.width / 3 * 2 + screen.width / 6 - paddedWidth / 2 + 1,
@@ -338,17 +383,20 @@ public class ConfigScreen extends Screen {
                     paddedWidth - 2, 18,
                     Component.translatable("gui.recipebook.search_hint"),
                     Component.translatable("gui.recipebook.search_hint"),
-                    searchQuery -> optionList.getList().updateSearchQuery(searchQuery)
+                    s -> {
+                        if (screen.preferredTab == null) screen.preferredTab = this;
+                        screen.updateGlobalSearch(s);
+
+                    }
             );
 
-            this.optionList = new ListHolderWidget<>(
-                    () -> new ScreenRectangle(tabArea.position(), tabArea.width() / 3 * 2, tabArea.height()),
+            this.optionList = ConfigSelectionList.asWidget(
                     new OptionListWidget(screen, category, screen.minecraft, 0, 0, screen.width / 3 * 2 + 1, screen.height, desc -> {
                         descriptionWidget.setOptionDescription(desc);
                     })
             );
 
-            descriptionWidget = new OptionDescriptionWidget(
+            this.descriptionWidget = new OptionDescriptionWidget(
                     () -> new ScreenRectangle(
                             screen.width / 3 * 2 + padding,
                             tabArea.top() + padding,
@@ -361,14 +409,22 @@ public class ConfigScreen extends Screen {
             updateButtons();
         }
 
+        public boolean hasSearch() {
+            return optionList.getType().children().stream().anyMatch(o -> o.searchQueryMatches);
+        }
+
         @Override
         public Component getTabTitle() {
-            return category.name();
+            MutableComponent copy = category.name().copy();
+            if (!hasSearch()) {
+                copy.withStyle(ChatFormatting.DARK_GRAY, ChatFormatting.STRIKETHROUGH);
+            }
+            return copy;
         }
 
         @Override
         public void visitChildren(Consumer<AbstractWidget> consumer) {
-            consumer.accept(optionList);
+            consumer.accept(optionList.getWidget());
             consumer.accept(saveFinishedButton);
             consumer.accept(cancelResetButton);
             consumer.accept(undoButton);
@@ -376,10 +432,52 @@ public class ConfigScreen extends Screen {
             consumer.accept(descriptionWidget);
         }
 
+        @Override
+        public void renderBackground(GuiGraphicsExtractor graphics) {
+            // right pane darker bg
+            graphics.blit(
+                    RenderPipelines.GUI_TEXTURED,
+                    DARKER_BG,
+                    rightPaneDim.left(), rightPaneDim.top(),
+                    (float) (rightPaneDim.right() + 2), (float) (rightPaneDim.bottom() + 2),
+                    rightPaneDim.width() + 2, rightPaneDim.height() + 2,
+                    32, 32
+            );
+
+            // top separator for right pane
+            graphics.pose().pushMatrix();
+            graphics.blit(
+                    RenderPipelines.GUI_TEXTURED,
+                    CreateWorldScreen.HEADER_SEPARATOR,
+                    rightPaneDim.left() - 1, rightPaneDim.top() - 2,
+                    0.0F, 0.0F,
+                    rightPaneDim.width() + 1, 2,
+                    32, 2
+            );
+            graphics.pose().popMatrix();
+
+            // left separator for right pane
+            graphics.pose().pushMatrix();
+            graphics.pose().translate(rightPaneDim.left(), rightPaneDim.top() - 1);
+            graphics.pose().rotate((float) Math.toRadians(90));
+            graphics.blit(
+                    RenderPipelines.GUI_TEXTURED,
+                    CreateWorldScreen.FOOTER_SEPARATOR,
+                    0, 0,
+                    0f, 0f,
+                    rightPaneDim.height() + 1, 2,
+                    32, 2
+            );
+            graphics.pose().popMatrix();
+        }
 
         @Override
-        public void doLayout(ScreenRectangle screenRectangle) {
-
+        public void doLayout(ScreenRectangle tabArea) {
+            var rect = new ScreenRectangle(tabArea.position(), tabArea.width() / 3 * 2, tabArea.height());
+            optionList.getType().setX(rect.left());
+            optionList.getType().setY(rect.top());
+            optionList.getType().setWidth(rect.width());
+            optionList.getType().setHeight(rect.height());
         }
 
         @Override
@@ -398,9 +496,9 @@ public class ConfigScreen extends Screen {
 
             undoButton.active = pendingChanges;
             saveFinishedButton.setMessage(pendingChanges ? Component.translatable("yacl.gui.save") : GuiUtils.translatableFallback("yacl.gui.done", CommonComponents.GUI_DONE));
-            saveFinishedButton.setTooltip(new ConfigTooltip(pendingChanges ? Component.translatable("yacl.gui.save.tooltip") : Component.translatable("yacl.gui.finished.tooltip"), saveFinishedButton));
+            saveFinishedButton.setTooltip(Tooltip.create(pendingChanges ? Component.translatable("yacl.gui.save.tooltip") : Component.translatable("yacl.gui.finished.tooltip")));
             cancelResetButton.setMessage(pendingChanges ? GuiUtils.translatableFallback("yacl.gui.cancel", CommonComponents.GUI_CANCEL) : Component.translatable("controls.reset"));
-            cancelResetButton.setTooltip(new ConfigTooltip(pendingChanges ? Component.translatable("yacl.gui.cancel.tooltip") : Component.translatable("yacl.gui.reset.tooltip"), cancelResetButton));
+            cancelResetButton.setTooltip(Tooltip.create(pendingChanges ? Component.translatable("yacl.gui.cancel.tooltip") : Component.translatable("yacl.gui.reset.tooltip")));
         }
     }
 
@@ -427,7 +525,7 @@ public class ConfigScreen extends Screen {
 
         @Override
         public void doLayout(ScreenRectangle screenRectangle) {
-            screen.minecraft.setScreen(category.screen().apply(screen.minecraft, screen));
+            GuiUtils.setScreen(category.screen().apply(screen.minecraft, screen));
         }
 
         @Override

@@ -1,13 +1,12 @@
 package id.patchedpixel.zoomify.config;
 
-import id.patchedpixel.zoomify.Zoomify;
 import id.patchedpixel.zoomify.config.lib.api.*;
 import id.patchedpixel.zoomify.config.lib.api.controller.DoubleSliderControllerBuilder;
 import id.patchedpixel.zoomify.config.lib.api.controller.EnumControllerBuilder;
 import id.patchedpixel.zoomify.config.lib.api.controller.IntegerSliderControllerBuilder;
 import id.patchedpixel.zoomify.config.lib.api.controller.TickBoxControllerBuilder;
 import id.patchedpixel.zoomify.config.lib.api.utils.OptionUtils;
-import id.patchedpixel.zoomify.config.lib.config.v3.ConfigEntry;
+import id.patchedpixel.zoomify.config.lib.config.ConfigEntry;
 
 import id.patchedpixel.zoomify.config.demo.ControlEmulation;
 import id.patchedpixel.zoomify.config.demo.FirstPersonDemo;
@@ -17,7 +16,6 @@ import id.patchedpixel.zoomify.utils.TransitionType;
 import id.patchedpixel.zoomify.zoom.DefaultZoomHelpers;
 import id.patchedpixel.zoomify.zoom.ZoomHelper;
 
-import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.CommonComponents;
 import net.minecraft.network.chat.Component;
@@ -30,7 +28,6 @@ import java.util.function.Consumer;
 import static id.patchedpixel.zoomify.utils.MinecraftExt.toast;
 
 public final class SettingsGuiFactory {
-
     private SettingsGuiFactory() {
     }
 
@@ -862,7 +859,6 @@ public final class SettingsGuiFactory {
                                     ZoomifySettings.Companion.saveToFile();
 
                                     screen.init(
-                                            Minecraft.getInstance(),
                                             screen.width,
                                             screen.height
                                     );
@@ -870,33 +866,6 @@ public final class SettingsGuiFactory {
                                 .build()
                 );
             }
-
-            misc.option(
-                    ButtonOption.createBuilder()
-                            .name(
-                                    Component.translatable(
-                                            "yacl3.config.zoomify.category.misc.root.option.unbindConflicting"
-                                    )
-                            )
-                            .description(
-                                    OptionDescription.createBuilder()
-                                            .text(
-                                                    Component.translatable(
-                                                            "yacl3.config.zoomify.category.misc.root.option.unbindConflicting.description.1"
-                                                    )
-                                            )
-                                            .build()
-                            )
-                            .text(
-                                    Component.translatable(
-                                            "yacl.control.action.execute"
-                                    )
-                            )
-                            .action((screen, option) -> {
-                                Zoomify.INSTANCE.unbindConflicting();
-                            })
-                            .build()
-            );
 
             misc.group(presetsGroup.build());
 

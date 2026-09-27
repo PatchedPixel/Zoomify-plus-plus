@@ -2,8 +2,7 @@
   "required": true,
   "minVersion": "0.8",
   "package": "id.patchedpixel.zoomify.mixins",
-  "refmap": "zoomify.refmap.json",
-  "compatibilityLevel": "JAVA_17",
+  "compatibilityLevel": "JAVA_25",
   "mixins": [
     "spyglass.SpyglassItemMixin"
   ],
@@ -14,13 +13,16 @@
     "requireAnnotations": true
   },
   "client": [
+    "AbstractSelectionListAccessor",
     "AbstractSelectionListMixin",
+    "GuiAccessor",
+    "GuiGraphicsExtractorMixin",
     "MinecraftMixin",
     "TabNavigationBarAccessor",
     "spyglass.AbstractClientPlayerEntityMixin",
-    "spyglass.GuiMixin",
-    "zoom.GameRendererMixin",
+    "spyglass.HudMixin",
+    "zoom.CameraMixin",
     "zoom.MouseMixin",
-    "zoom.secondary.GameRendererMixin"
+    "zoom.secondary.HudMixin"
   ]
 }

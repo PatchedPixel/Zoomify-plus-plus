@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableList;
 import com.google.common.collect.ImmutableSet;
 import id.patchedpixel.zoomify.config.lib.api.*;
 import id.patchedpixel.zoomify.config.lib.api.controller.ControllerBuilder;
+import id.patchedpixel.zoomify.config.lib.impl.utils.ConfigConstants;
 import net.minecraft.network.chat.Component;
 import org.apache.commons.lang3.Validate;
 import org.jetbrains.annotations.ApiStatus;

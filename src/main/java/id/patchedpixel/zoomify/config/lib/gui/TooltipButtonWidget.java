@@ -1,10 +1,11 @@
 package id.patchedpixel.zoomify.config.lib.gui;
 
 import net.minecraft.client.gui.components.Button;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 
-public class TooltipButtonWidget extends Button {
+public class TooltipButtonWidget extends Button.Plain {
 
     protected final Screen screen;
 
@@ -12,6 +13,6 @@ public class TooltipButtonWidget extends Button {
         super(x, y, width, height, message, onPress, DEFAULT_NARRATION);
         this.screen = screen;
         if (tooltip != null)
-            setTooltip(new ConfigTooltip(tooltip, this));
+            setTooltip(Tooltip.create(tooltip));
     }
 }

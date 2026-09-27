@@ -1,21 +1,18 @@
 package id.patchedpixel.zoomify.config.lib.gui.image.impl;
 
-import com.mojang.blaze3d.platform.GlConst;
-import com.mojang.blaze3d.platform.GlStateManager;
-import id.patchedpixel.zoomify.config.lib.debug.DebugProperties;
 import id.patchedpixel.zoomify.config.lib.gui.image.ImageRenderer;
 import id.patchedpixel.zoomify.config.lib.gui.image.ImageRendererFactory;
-import id.patchedpixel.zoomify.config.lib.gui.utils.GuiUtils;
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.client.gui.GuiGraphicsExtractor;
+import net.minecraft.client.renderer.RenderPipelines;
+import net.minecraft.resources.Identifier;
 
 public class ResourceTextureImage implements ImageRenderer {
-    private final ResourceLocation location;
+    private final Identifier location;
     private final int width, height;
     private final int textureWidth, textureHeight;
     private final float u, v;
 
-    public ResourceTextureImage(ResourceLocation location, float u, float v, int width, int height, int textureWidth, int textureHeight) {
+    public ResourceTextureImage(Identifier location, float u, float v, int width, int height, int textureWidth, int textureHeight) {
         this.location = location;
         this.width = width;
         this.height = height;
@@ -26,22 +23,24 @@ public class ResourceTextureImage implements ImageRenderer {
     }
 
     @Override
-    public int render(GuiGraphics graphics, int x, int y, int renderWidth, float tickDelta) {
+    public int render(GuiGraphicsExtractor graphics, int x, int y, int renderWidth, float tickDelta) {
         float ratio = renderWidth / (float)this.width;
         int targetHeight = (int) (this.height * ratio);
 
-        graphics.pose().pushPose();
-        graphics.pose().translate(x, y, 0);
-        graphics.pose().scale(ratio, ratio, 1);
+        graphics.pose().pushMatrix();
+        graphics.pose().translate(x, y);
+        graphics.pose().scale(ratio, ratio);
 
-        if (DebugProperties.IMAGE_FILTERING) {
-            GlStateManager._texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_MAG_FILTER, GlConst.GL_LINEAR);
-            GlStateManager._texParameter(GlConst.GL_TEXTURE_2D, GlConst.GL_TEXTURE_MIN_FILTER, GlConst.GL_LINEAR);
-        }
+        graphics.blit(
+                RenderPipelines.GUI_TEXTURED,
+                location,
+                0, 0,
+                this.u, this.v,
+                this.width, this.height,
+                this.textureWidth, this.textureHeight
+        );
 
-        GuiUtils.blitGuiTex(graphics, location, 0, 0, this.u, this.v, this.width, this.height, this.textureWidth, this.textureHeight);
-
-        graphics.pose().popPose();
+        graphics.pose().popMatrix();
 
         return targetHeight;
     }
@@ -51,7 +50,7 @@ public class ResourceTextureImage implements ImageRenderer {
 
     }
 
-    public static ImageRendererFactory createFactory(ResourceLocation location, float u, float v, int width, int height, int textureWidth, int textureHeight) {
+    public static ImageRendererFactory createFactory(Identifier location, float u, float v, int width, int height, int textureWidth, int textureHeight) {
         return (ImageRendererFactory.OnThread) () -> () -> new ResourceTextureImage(location, u, v, width, height, textureWidth, textureHeight);
     }
 }
